@@ -13,13 +13,13 @@
 		"NumberOfInstances" : {
 			"Description" : "Number of instances in the cluster",
 			"Type" : "Number",
-			"Default" : "2"
+			"Default" : "4"
 		},
 
 		"InstanceType" : {
 			"Description" : "Type of EC2 instance to launch. Choose the one which allows non-hvm AMIs",
 			"Type" : "String",
-			"Default" : "m3.medium",
+			"Default" : "c3.2xlarge",
 			"AllowedValues" : ["m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", "m1.small", 
 								"m1.medium", "m1.large", "m1.xlarge", "c3.large", "c3.xlarge", 
 								"c3.2xlarge", "c3.4xlarge", "c3.8xlarge", "c1.medium", "c1.xlarge", 

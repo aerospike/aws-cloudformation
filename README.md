@@ -3,7 +3,7 @@ aws-cloudformation
 
 AWS CloudFormation scripts related to Aerospike
 
-## Download a copy of this repo using either the Download link or use git clone.
+Download a copy of this repo using either the Download link or use git clone.
 
 Go to AWS Cloud formation console at https://console.aws.amazon.com/cloudformation/home
 
@@ -21,7 +21,7 @@ http://aws.amazon.com/ec2/instance-types/
 
 For more info on which instance to use, refer to Aerospike [AWS Capacity Planning](http://www.aerospike.com/docs/operations/aws/capacity_planning.html).
 
-Use a valid existing keypair file name. If you don't have a keeper in AWS already, [create one first](http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-create-key-pair.html) If you give an invalid keypair file name, you will not be able to login to the instances.
+Use a valid existing keypair name(without the .pem part). If you don't have a keeper in AWS already, [create one first](http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-create-key-pair.html) If you give an invalid keypair file name, you will not be able to login to the instances.
 
 Put number of instances as required.
 

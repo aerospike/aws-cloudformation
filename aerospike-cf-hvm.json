@@ -4,7 +4,7 @@
 	"Parameters" : {
 
 		"KeyPair" : {
-			"Description" : "Name of the KeyPair that should be used to allow ssh access to the instances",
+			"Description" : "Name of the KeyPair (without the .pem extension) that should be used to allow ssh access to the instances",
 			"Type" : "String",
 			"AllowedPattern" : ".+",
 			"ConstraintDescription" : "Please specify the name of the keypair that you use to login"
@@ -17,27 +17,28 @@
 		},
 
 		"InstanceType" : {
-			"Description" : "Type of EC2 instance to launch. Choose the one which allows non-hvm AMIs",
+			"Description" : "Type of EC2 instance to launch. Choose the one which allows HVM AMIs",
 			"Type" : "String",
-			"Default" : "c3.2xlarge",
-			"AllowedValues" : ["m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", "m1.small", 
-								"m1.medium", "m1.large", "m1.xlarge", "c3.large", "c3.xlarge", 
-								"c3.2xlarge", "c3.4xlarge", "c3.8xlarge", "c1.medium", "c1.xlarge", 
-								"m2.xlarge", "m2.2xlarge", "m2.4xlarge"],
-			"ConstraintDescription"  : "Use an instane type where HVM AMI is not mandatory. Or use a cloudformation template which is meant for HVM AMIs."
+			"Default" : "r3.2xlarge",
+			"AllowedValues" : ["t2.micro,t2.small,t2.medium,m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", 
+								 "c3.large", "c3.xlarge", 
+								"c3.2xlarge", "c3.4xlarge", "c3.8xlarge", "r3.large",
+								"r3.xlarge","r3.2xlarge","r3.4xlarge","r3.8xlarge"
+								],
+			"ConstraintDescription"  : "Use an instance type which supports linux HVM AMI"
 		}
 	},
 
 	"Mappings" : {
 		"AWSRegionalAMIs" : {
-			"us-east-1" : {"nonhvm" : "ami-729f611a" },
-			"us-west-2" : {"nonhvm" : "ami-01f28f31" },
-			"us-west-1" : {"nonhvm" : "ami-886e68cd" },
-			"eu-west-1" : {"nonhvm" : "ami-e96fa69e" },
-			"ap-southeast-1" : {"nonhvm" : "ami-aa0956f8" },
-			"ap-southeast-2" : {"nonhvm" : "ami-2112761b" },
-			"ap-northeast-1" : {"nonhvm" : "ami-3f6e263e" },
-			"sa-east-1" : {"nonhvm" : "ami-49be1154" }
+			"us-east-1" : {"hvm" : "ami-7c5af814" },
+			"us-west-2" : {"hvm" : "ami-654f0e55" },
+			"us-west-1" : {"hvm" : "ami-3fb6b87a" },
+			"eu-west-1" : {"hvm" : "ami-46b81d31" },
+			"ap-southeast-1" : {"hvm" : "ami-ec83a6be" },
+			"ap-southeast-2" : {"hvm" : "ami-f5eb8bcf" },
+			"ap-northeast-1" : {"hvm" : "ami-2fc4e62e" },
+			"sa-east-1" : {"hvm" : "ami-21e9433c" }
 		},
 
 		"HorribleHackForSubtraction" : {
@@ -67,7 +68,7 @@
 			"Properties" : {
 				"InstanceType" : { "Ref" : "InstanceType"},
 				"KeyName" : { "Ref" : "KeyPair"},
-				"ImageId" : { "Fn::FindInMap" : [ "AWSRegionalAMIs", { "Ref" : "AWS::Region" }, "nonhvm" ] },
+				"ImageId" : { "Fn::FindInMap" : [ "AWSRegionalAMIs", { "Ref" : "AWS::Region" }, "hvm" ] },
 				"Monitoring" : "true",
 				"AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : { "Ref" : "AWS::Region" } } ] },
 				"NetworkInterfaces" : [{
@@ -111,7 +112,7 @@
 			"Properties" : {
 				"InstanceType" : { "Ref" : "InstanceType"},
 				"KeyName" : { "Ref" : "KeyPair" },
-				"ImageId" : { "Fn::FindInMap" : [ "AWSRegionalAMIs", { "Ref": "AWS::Region" }, "nonhvm" ] },
+				"ImageId" : { "Fn::FindInMap" : [ "AWSRegionalAMIs", { "Ref": "AWS::Region" }, "hvm" ] },
 				"AssociatePublicIpAddress" : "true",
 				"SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
 				"UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [

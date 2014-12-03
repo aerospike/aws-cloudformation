@@ -31,14 +31,14 @@
 
 	"Mappings" : {
 		"AWSRegionalAMIs" : {
-			"us-east-1" : {"hvm" : "ami-7c5af814" },
-			"us-west-2" : {"hvm" : "ami-654f0e55" },
-			"us-west-1" : {"hvm" : "ami-3fb6b87a" },
-			"eu-west-1" : {"hvm" : "ami-46b81d31" },
-			"ap-southeast-1" : {"hvm" : "ami-ec83a6be" },
-			"ap-southeast-2" : {"hvm" : "ami-f5eb8bcf" },
-			"ap-northeast-1" : {"hvm" : "ami-2fc4e62e" },
-			"sa-east-1" : {"hvm" : "ami-21e9433c" }
+			"us-east-1" : {"name": "Northern Virginia",	"hvm" : "ami-de46d6b6" },
+			"us-west-2" : {"name": "Oregon", 		"hvm" : "ami-7bbbee4b" },
+			"us-west-1" : {"name": "Northern California", 	"hvm" : "ami-8bf0e1ce" },
+			"eu-west-1" : {"name": "Ireland", 		"hvm" : "ami-d0ce7fa7" },
+			"ap-southeast-1" : {"name": "Singapore", 	"hvm" : "ami-cdc8ea9f" },
+			"ap-southeast-2" : {"name": "Sydney", 		"hvm" : "ami-cd9ff1f7" },
+			"ap-northeast-1" : {"name": "Tokyo", 		"hvm" : "ami-9cece99d" },
+			"sa-east-1" : {"name": "Sao Paulo", 		"hvm" : "ami-b7ea5baa" }
 		},
 
 		"HorribleHackForSubtraction" : {

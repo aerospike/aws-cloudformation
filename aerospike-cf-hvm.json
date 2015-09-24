@@ -18,10 +18,13 @@
 			"Description" : "Type of EC2 instance to launch. Choose the one which allows HVM AMIs",
 			"Type" : "String",
 			"Default" : "r3.2xlarge",
-			"AllowedValues" : [ "t2.micro", "t2.small", "t2.medium",
-                                "m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", 
+			"AllowedValues" : [ "t2.micro", "t2.small", "t2.medium", "t2.large",
+								"m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", 
+								"m4.large", "m4.xlarge", "m4.2xlarge", "m4.4xlarge", "m4.10xlarge",
 								"c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge",
-                                "r3.large",	"r3.xlarge", "r3.2xlarge", "r3.4xlarge", "r3.8xlarge"
+								"c4.large", "c4.xlarge", "c4.2xlarge", "c4.4xlarge", "c4.8xlarge",
+								"r3.large",	"r3.xlarge", "r3.2xlarge", "r3.4xlarge", "r3.8xlarge",
+								"i2.xlarge", "i2.2xlarge", "i2.4xlarge", "i2.8xlarge"
 								],
 			"ConstraintDescription"  : "Use an instance type which supports linux HVM AMI"
 		}
@@ -30,10 +33,10 @@
 	"Mappings" : {
 		"AWSRegionalAMIs" : {
 			"us-east-1" : {"name": "Northern Virginia",	"hvm" : "ami-71b1371a" },
-			"us-west-2" : {"name": "Oregon", 		    "hvm" : "ami-3f4c5f0f" },
+			"us-west-2" : {"name": "Oregon", 			"hvm" : "ami-3f4c5f0f" },
 			"us-west-1" : {"name": "Northern California", 	"hvm" : "ami-d139c295" },
-			"eu-west-1" : {"name": "Ireland", 		    "hvm" : "ami-8dfcd8fa" },
-            "eu-central-1" : {"name" : "Franfurt",      "hvm" : "ami-d61d1ccb" },
+			"eu-west-1" : {"name": "Ireland", 			"hvm" : "ami-8dfcd8fa" },
+			"eu-central-1" : {"name" : "Franfurt",	  "hvm" : "ami-d61d1ccb" },
 			"ap-southeast-1" : {"name": "Singapore", 	"hvm" : "ami-dc1b108e" },
 			"ap-southeast-2" : {"name": "Sydney", 		"hvm" : "ami-8b3579b1" },
 			"ap-northeast-1" : {"name": "Tokyo", 		"hvm" : "ami-56f17e56" },
@@ -43,44 +46,44 @@
 	},
 
 	"Resources" : {
-        "ClusterRole" : {
-             "Type": "AWS::IAM::Role",
-             "Properties": {
-                "AssumeRolePolicyDocument": {
-                   "Version" : "2012-10-17",
-                   "Statement": [ {
-                      "Effect": "Allow",
-                      "Principal": {
-                         "Service": [ "ec2.amazonaws.com" ]
-                      },
-                      "Action": [ "sts:AssumeRole" ]
-                   } ]
-                },
-                "Path": "/",
-                "Policies": [ {
-                   "PolicyName": "AerospikeClusterRole",
-                   "PolicyDocument": {
-                      "Version" : "2012-10-17",
-                      "Statement": [ {
-                         "Effect": "Allow",
-                         "Action": "ec2:DescribeInstances",
-                         "Resource": "*"
-                      } ]
-                   }
-                } ]
-            }
-        },
+		"ClusterRole" : {
+			 "Type": "AWS::IAM::Role",
+			 "Properties": {
+				"AssumeRolePolicyDocument": {
+				   "Version" : "2012-10-17",
+				   "Statement": [ {
+					  "Effect": "Allow",
+					  "Principal": {
+						 "Service": [ "ec2.amazonaws.com" ]
+					  },
+					  "Action": [ "sts:AssumeRole" ]
+				   } ]
+				},
+				"Path": "/",
+				"Policies": [ {
+				   "PolicyName": "AerospikeClusterRole",
+				   "PolicyDocument": {
+					  "Version" : "2012-10-17",
+					  "Statement": [ {
+						 "Effect": "Allow",
+						 "Action": "ec2:DescribeInstances",
+						 "Resource": "*"
+					  } ]
+				   }
+				} ]
+			}
+		},
 
-        "ClusterInstanceProfile": {
-             "Type": "AWS::IAM::InstanceProfile",
-             "Properties": {
-                "Path": "/",
-                "Roles": [ {
-                   "Ref": "ClusterRole"
-                } ]
-             }
-        },
-        
+		"ClusterInstanceProfile": {
+			 "Type": "AWS::IAM::InstanceProfile",
+			 "Properties": {
+				"Path": "/",
+				"Roles": [ {
+				   "Ref": "ClusterRole"
+				} ]
+			 }
+		},
+		
 
 		"ClusterGroup" : {
 			"Type" : "AWS::AutoScaling::AutoScalingGroup",
@@ -93,7 +96,7 @@
 				"AvailabilityZones" : [ { "Fn::Select" : [ "0", { "Fn::GetAZs" : { "Ref" : "AWS::Region" } } ] } ],
 				"VPCZoneIdentifier" : [{ "Ref" : "PublicSubnet" }],
 				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"}, "PropagateAtLaunch" : "true" } ]
-            }
+			}
 		},
 
 		"LaunchConfig" : {
@@ -102,20 +105,22 @@
 			"Properties" : {
 				"InstanceType" : { "Ref" : "InstanceType"},
 				"KeyName" : { "Ref" : "KeyPair" },
-                "IamInstanceProfile" : { "Ref" : "ClusterInstanceProfile" },
+				"IamInstanceProfile" : { "Ref" : "ClusterInstanceProfile" },
 				"ImageId" : { "Fn::FindInMap" : [ "AWSRegionalAMIs", { "Ref": "AWS::Region" }, "hvm" ] },
 				"AssociatePublicIpAddress" : "true",
 				"SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
 				"UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
 					"#!/bin/bash\n",
 					"echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
+					"  PUBLICIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)\n",
+					"  sed -i \"/port 3000/a \\\t\taccess-address $PUBLICIP virtual\" /etc/aerospike/aerospike.conf\n",
 					"  ###Point to all instances using the mesh-address config option\n",
-                    "  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
-                    "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
-                    "  sed -i '/.*mesh-seed-address-port/d' /etc/aerospike/aerospike.conf\n",
-                    "  for i in $PRIVATEIP; do ",
-					"    sed -i \"/interval/i \t\tmesh-seed-address-port $i 3002\" /etc/aerospike/aerospike.conf\n",
-                    "  done \n",
+					"  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
+					"  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
+					"  sed -i '/.*mesh-seed-address-port/d' /etc/aerospike/aerospike.conf\n",
+					"  for i in $PRIVATEIP; do ",
+					"	sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" /etc/aerospike/aerospike.conf\n",
+					"  done \n",
 					"  /etc/init.d/aerospike start\n",
 					"  /etc/init.d/amc start\n",
 					"echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n" 
@@ -199,12 +204,12 @@
 				{
 					"IpProtocol" : "tcp",
 					"FromPort" : "3000",
-                    "ToPort" : "3000",
-                    "CidrIp" : "0.0.0.0/0"
-                },
-                {
-                    "IpProtocol" : "tcp",
-                    "FromPort" : "3001",
+					"ToPort" : "3000",
+					"CidrIp" : "0.0.0.0/0"
+				},
+				{
+					"IpProtocol" : "tcp",
+					"FromPort" : "3001",
 					"ToPort" : "3004",
 					"CidrIp" : "10.0.0.0/16"
 

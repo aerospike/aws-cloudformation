@@ -119,7 +119,7 @@
 					"  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
 					"  sed -i '/.*mesh-seed-address-port/d' /etc/aerospike/aerospike.conf\n",
 					"  for i in $PRIVATEIP; do ",
-					"	sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" /etc/aerospike/aerospike.conf\n",
+					"    sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" /etc/aerospike/aerospike.conf\n",
 					"  done \n",
 					"  /etc/init.d/aerospike start\n",
 					"  /etc/init.d/amc start\n",

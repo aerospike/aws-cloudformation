@@ -109,7 +109,7 @@
 				"UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
 					"#!/bin/bash\n",
 					"echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
-					"  ###Point to the first instance using the mesh-address config option\n",
+					"  ###Point to all instances using the mesh-address config option\n",
                     "  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
                     "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
                     "  sed -i '/.*mesh-seed-address-port/d' /etc/aerospike/aerospike.conf\n",

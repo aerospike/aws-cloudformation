@@ -111,7 +111,7 @@
 					"echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
                     "  PUBLICIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)\n",
                     "  sed -i \"/port 3000/a \\\t\taccess-address $PUBLICIP virtual\" /etc/aerospike/aerospike.conf\n",
-					"  # Get all private IPs from AWS based on tags\n",
+					"  ###Point to all instances using the mesh-address config option\n",
                     "  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
                     "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
                     "  sed -i '/.*mesh-seed-address-port/d' /etc/aerospike/aerospike.conf\n",

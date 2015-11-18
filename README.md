@@ -32,6 +32,7 @@ For more info on which instance to use, refer to Aerospike [AWS Capacity Plannin
 4. Choose a valid existing keypair. If you don't have a keypair in AWS already, [create one first](http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-create-key-pair.html) If you do not provide a keypair file name, you will not be able to ssh into the instances.
 
 5. *(Optional)* Enter the URL where CloudFormation can download your customized namespace settings. This will be appended to the end of the aerospike.conf file as-is.
+  * The simplest method is to upload a file to S3, then making the file public. The direct link is available via the properties tab of the S3 object. 
 
 6. Enter number of instances as required.
 

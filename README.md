@@ -26,8 +26,7 @@ Change the region as per your requirement.
 2. Choose the Aerospike Version you'd like to deploy.
 
 3. Choose an instance type from the ones available at
-http://aws.amazon.com/ec2/instance-types/
-
+http://aws.amazon.com/ec2/instance-types/  
 For more info on which instance to use, refer to Aerospike [AWS Capacity Planning](http://www.aerospike.com/docs/operations/aws/capacity_planning.html).
 
 4. Choose a valid existing keypair. If you don't have a keypair in AWS already, [create one first](http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-create-key-pair.html) If you do not provide a keypair file name, you will not be able to ssh into the instances.

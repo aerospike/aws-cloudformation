@@ -70,4 +70,4 @@ This script will then parse out the private IP addresses and modify the clusteri
 
 This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster.
 
-By default, Ping, SSH, Aerospike ports 3000 and AMC port 8081 are open globally (0.0.0.0/0). You may want to lock this down to just your own IP range.
+By default ping, Aerospike port 3000 and AMC port 8081 are open globally (0.0.0.0/0). You may want to lock this down to just your own IP range.

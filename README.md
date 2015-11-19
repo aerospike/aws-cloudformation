@@ -53,6 +53,13 @@ Go to your EC2 console and login to the instances using the IPs listed against t
 
 Fire off some load using the [java benchmark client](http://www.aerospike.com/docs/client/java/benchmarks.html) included in the instances and watch the load with [AMC](http://www.aerospike.com/docs/amc/) 
 
+## SSH Access
+
+SSH access is not required to use Aerospike. With this in mind, and in accord with best seurity practices, port 22 is not open in the security group definition.
+
+You may still open port 22 yourself. Once the port is opened, you may SSH in as the **ec2-user** using the keypair configured through this cloudformation script.
+
+
 
 ***Architecture***
 Cloudformation will create all the VPCs, Sunbnets, Security Groups, Autoscaling, etc... as separate entities just for the Aerospike cluster.

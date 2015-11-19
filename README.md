@@ -61,7 +61,7 @@ You may still open port 22 yourself. Once the port is opened, you may SSH in as 
 
 
 
-***Architecture***
+## Architecture
 Cloudformation will create all the VPCs, Sunbnets, Security Groups, Autoscaling, etc... as separate entities just for the Aerospike cluster.
 
 Upon instance startup, instances will run a userdata script that will query AWS for instances based on the unique StackID tag CloudFormation generates. This functionality requires the ec2-describe instance policy and utilizes IAM roles for this.

@@ -17,7 +17,9 @@
 		"NumberOfInstances" : {
 			"Description" : "Number of instances in the cluster",
 			"Type" : "Number",
-			"Default" : "4"
+			"Default" : "4",
+            "MinValue" : "1",
+            "MaxValue" : "15"
 		},
 
 		"InstanceType" : {
@@ -33,6 +35,13 @@
 								"i2.xlarge", "i2.2xlarge", "i2.4xlarge", "i2.8xlarge"
 								]
 		},
+        "EBS" : {
+            "Description" : "Size of EBS SSD volume in GB. The volume will attach under /dev/sdg. Limit of 16000. Enter 0 to not use EBS.",
+            "Type" : "Number",
+            "Default" : "50",
+            "MinValue" : "0",
+            "MaxValue" : "16000"
+        },
         "NamespaceFile" : {
             "Description" : "(Optional) Location of your namespace definition. Must be publically downloadable. Will append file directly to end of aerospike.conf",
             "Type" : "String"
@@ -90,6 +99,11 @@
             "sa-east-1" : {"name": "SPaulo"}
         }
     },
+    
+    "Conditions" : {
+        "NotUsingEBS" : { "Fn::Equals" : [ { "Ref" : "EBS" }, 0  ] },
+        "UsingEBS" : { "Fn::Not" : [ { "Fn::Equals" : [ { "Ref" : "EBS" }, 0 ]} ] }
+    },
 
 	"Resources" : {
 		"ClusterRole" : {
@@ -129,13 +143,14 @@
 				} ]
 			 }
 		},
+
 		
 
 		"ClusterGroup" : {
 			"Type" : "AWS::AutoScaling::AutoScalingGroup",
 			"DependsOn" : "GatewayToInternet",
 			"Properties" : {
-				"LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
+				"LaunchConfigurationName" : { "Fn::If" : [ "NotUsingEBS", { "Ref" : "LaunchConfig" }, { "Ref" : "EBSLaunchConfig" } ] },
 				"DesiredCapacity" : { "Ref" : "NumberOfInstances"},
 				"MinSize" : "1",
 				"MaxSize" : "15",
@@ -144,35 +159,140 @@
 				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"}, "PropagateAtLaunch" : "true" } ]
 			}
 		},
+        "LaunchConfig" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "DependsOn" : "GatewayToInternet",
+            "Condition" : "NotUsingEBS",
+            "Metadata" : {
+                "AWS::CloudFormation::Init" : {
+                    "config" : {
+                        "files" : {
+                            "/tmp/aerospike_cluster" : {
+                                "content" : {  "Fn::Join" : ["", [ 
+                                   "#!/bin/bash\n",
+                                   "echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
+                                   "  PUBLICIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)\n",
+                                   "  CONF=/etc/aerospike/aerospike.conf\n",
+                                   "  sed -i \"/port 3000/a \\\t\taccess-address $PUBLICIP virtual\" $CONF\n",
+                                   "  ###Point to all instances using the mesh-address config option\n",
+                                   "  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
+                                   "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
+                                   "  sed -i '/.*mesh-seed-address-port/d' $CONF\n",
+                                   "  for i in $PRIVATEIP; do ",
+                                   "    sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" $CONF\n",
+                                   "  done \n",
+                                   "  if [ ! -z \"",{ "Ref" :"NamespaceFile" },"\" ]; then\n",
+                                   "    curl -s ",{ "Ref" :"NamespaceFile" }," >> $CONF; fi\n",
+                                   "  /etc/init.d/aerospike start\n",
+                                   "  /etc/init.d/amc start\n",
+                                   "echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n"
+                                 ] ] },
+                                "mode" : "000744",
+                                "owner" : "root",
+                                "group" : "root"
+                            }
+                        },
+                        "commands" : {
+                            "01_form_asd_cluster" : {
+                                "command" : "/tmp/aerospike_cluster",
+                                "cwd" : "/tmp"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "InstanceType" : { "Ref" : "InstanceType"},
+                "KeyName" : { "Ref" : "KeyPair" },
+                "IamInstanceProfile" : { "Ref" : "ClusterInstanceProfile" },
+                "ImageId" : { "Fn::FindInMap" : [ "VersionMap",  {"Ref" : "AerospikeVersion"} , { "Fn::FindInMap" : [ "RegionMap", { "Ref": "AWS::Region"}, "name"] } ] },
+                "AssociatePublicIpAddress" : "true",
+                "SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
+                "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+                    "#!/bin/bash -xe\n",
+                    "yum update -y aws-cfn-bootstrap\n",
 
-		"LaunchConfig" : {
+                    "/opt/aws/bin/cfn-init -v ",
+                    "         --stack ", { "Ref" : "AWS::StackName" },
+                    "         --resource LaunchConfig ",
+                    "         --region ", { "Ref" : "AWS::Region" }, "\n",
+
+                    "/opt/aws/bin/cfn-signal -e $? ",
+                    "         --stack ", { "Ref" : "AWS::StackName" },
+                    "         --resource ClusterGroup ",
+                    "         --region ", { "Ref" : "AWS::Region" }, "\n"
+                    ] ] }
+                }
+            }
+        },
+
+		"EBSLaunchConfig" : {
 			"Type" : "AWS::AutoScaling::LaunchConfiguration",
 			"DependsOn" : "GatewayToInternet",
+            "Condition" : "UsingEBS",
+            "Metadata" : {
+                "AWS::CloudFormation::Init" : {
+                    "config" : {
+                        "files" : {
+                            "/tmp/aerospike_cluster" : {
+                                "content" : {  "Fn::Join" : ["", [
+                                   "#!/bin/bash\n",
+                                   "echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
+                                   "  PUBLICIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)\n",
+                                   "  CONF=/etc/aerospike/aerospike.conf\n",
+                                   "  sed -i \"/port 3000/a \\\t\taccess-address $PUBLICIP virtual\" $CONF\n",
+                                   "  ###Point to all instances using the mesh-address config option\n",
+                                   "  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
+                                   "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
+                                   "  sed -i '/.*mesh-seed-address-port/d' $CONF\n",
+                                   "  for i in $PRIVATEIP; do ",
+                                   "    sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" $CONF\n",
+                                   "  done \n",
+                                   "  if [ ! -z \"",{ "Ref" :"NamespaceFile" },"\" ]; then\n",
+                                   "    curl -s ",{ "Ref" :"NamespaceFile" }," >> $CONF; fi\n",
+                                   "  /etc/init.d/aerospike start\n",
+                                   "  /etc/init.d/amc start\n",
+                                   "echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n"
+                                 ] ] },
+                                "mode" : "000744",
+                                "owner" : "root",
+                                "group" : "root"
+                            }
+                        },
+                        "commands" : {
+                            "01_form_asd_cluster" : {
+                                "command" : "/tmp/aerospike_cluster",
+                                "cwd" : "/tmp"
+                            }
+                        }
+                    }
+                }
+            },
 			"Properties" : {
 				"InstanceType" : { "Ref" : "InstanceType"},
 				"KeyName" : { "Ref" : "KeyPair" },
+                "BlockDeviceMappings" : [ {
+                    "DeviceName" : "/dev/sdg",
+                    "Ebs" : { "VolumeSize" : {"Ref" : "EBS" },
+                             "VolumeType" : "gp2" }
+                }],
 				"IamInstanceProfile" : { "Ref" : "ClusterInstanceProfile" },
 				"ImageId" : { "Fn::FindInMap" : [ "VersionMap",  {"Ref" : "AerospikeVersion"} , { "Fn::FindInMap" : [ "RegionMap", { "Ref": "AWS::Region"}, "name"] } ] },
 				"AssociatePublicIpAddress" : "true",
 				"SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
 				"UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
-					"#!/bin/bash\n",
-					"echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
-					"  PUBLICIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)\n",
-                    "  CONF=/etc/aerospike/aerospike.conf\n",
-					"  sed -i \"/port 3000/a \\\t\taccess-address $PUBLICIP virtual\" $CONF\n",
-					"  ###Point to all instances using the mesh-address config option\n",
-					"  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
-					"  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
-					"  sed -i '/.*mesh-seed-address-port/d' $CONF\n",
-					"  for i in $PRIVATEIP; do ",
-					"    sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" $CONF\n",
-					"  done \n",
-                    "  if [ ! -z \"",{ "Ref" :"NamespaceFile" },"\" ]; then\n",
-                    "    curl -s ",{ "Ref" :"NamespaceFile" }," >> $CONF; fi\n",
-					"  /etc/init.d/aerospike start\n",
-					"  /etc/init.d/amc start\n",
-					"echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n" 
+                    "#!/bin/bash -xe\n",
+                    "yum update -y aws-cfn-bootstrap\n",
+
+                    "/opt/aws/bin/cfn-init -v ",
+                    "         --stack ", { "Ref" : "AWS::StackName" },
+                    "         --resource EBSLaunchConfig ",
+                    "         --region ", { "Ref" : "AWS::Region" }, "\n",
+
+                    "/opt/aws/bin/cfn-signal -e $? ",
+                    "         --stack ", { "Ref" : "AWS::StackName" },
+                    "         --resource ClusterGroup ",
+                    "         --region ", { "Ref" : "AWS::Region" }, "\n"
 					] ] }
 				}
 			}

@@ -362,7 +362,7 @@
 		"InstanceSecurityGroup" : {
 			"Type" : "AWS::EC2::SecurityGroup",
 			"Properties" : {
-				"GroupDescription" : "Enable ports needed by SSH and Aerospike and XDR",
+				"GroupDescription" : "Enable ports needed by Aerospike",
 				"VpcId" : { "Ref" : "VPC" },
 				"SecurityGroupIngress" : [ {
 					"IpProtocol" : "tcp",

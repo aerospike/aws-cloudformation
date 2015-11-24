@@ -71,3 +71,6 @@ This script will then parse out the private IP addresses and modify the clusteri
 This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster.
 
 By default ping, Aerospike port 3000 and AMC port 8081 are open globally (0.0.0.0/0). You may want to lock this down to just your own IP range.
+
+## Pricing
+The Aerospike AMI is a free subscription. You will be prompted to subscribe to the AMI before this CF template can be used. Pricing is dependant on the instance type used. Please see EC2 pricing [here](https://aws.amazon.com/ec2/pricing/). Cost will increase if launching more than 1 instance.

@@ -62,13 +62,13 @@ You may still open port 22 yourself. Once the port is opened, you may SSH in as 
 
 
 ## Architecture
-Cloudformation will create all the VPCs, Sunbnets, Security Groups, Autoscaling, etc... as separate entities just for the Aerospike cluster.
+Cloudformation will create all the VPCs, Subnets, Security Groups, Autoscaling, etc... as separate entities just for the Aerospike cluster.
 
 Upon instance startup, instances will run a userdata script that will query AWS for instances based on the unique StackID tag CloudFormation generates. This functionality requires the ec2-describe instance policy and utilizes IAM roles for this.
 
 This script will then parse out the private IP addresses and modify the clustering section of aerospike configs with said IPs.
 
-This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster.
+This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster. Note that cluster resiliancy is not the same as data resiliancy. Please wait for migrations to compelte before performing another cluster size change.
 
 By default ping, Aerospike port 3000 and AMC port 8081 are open globally (0.0.0.0/0). You may want to lock this down to just your own IP range.
 

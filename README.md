@@ -68,7 +68,7 @@ Upon instance startup, instances will run a userdata script that will query AWS 
 
 This script will then parse out the private IP addresses and modify the clustering section of aerospike configs with said IPs.
 
-This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster. Note that cluster resiliancy is not the same as data resiliancy. Please wait for migrations to compelte before performing another cluster size change.
+This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster. Note that cluster resiliancy is not the same as data resiliancy. Please wait for migrations to complete before performing another cluster size change.
 
 By default ping, Aerospike port 3000 and AMC port 8081 are open globally (0.0.0.0/0). You may want to lock this down to just your own IP range.
 

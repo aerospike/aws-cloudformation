@@ -13,11 +13,20 @@
             "Default" : "3.6.3",
             "AllowedValues" : [ "3.6.0", "3.6.1", "3.6.2", "3.6.3" ]
         },
-        "Subnet" : {
-            "Description" : "The subnet of the vpc to deploy into",
+        "VPC" : {
+            "Description" : "The VPC to deploy into",
+            "Type" : "AWS::EC2::VPC::Id"
+        },
+        "VPCSubnet" : {
+            "Description" : "Choose a subnet from the VPC selected above.",
             "Type" : "AWS::EC2::Subnet::Id"
         },
-
+        "Tenancy" : {
+            "Description" : "The tenancy of your instances",
+            "Type" : "String",
+            "Default" : "default",
+            "AllowedValues" : [ "default", "dedicated" ]
+        },
 		"NumberOfInstances" : {
 			"Description" : "Number of instances in the cluster",
 			"Type" : "Number",
@@ -25,7 +34,6 @@
             "MinValue" : "1",
             "MaxValue" : "15"
 		},
-
 		"InstanceType" : {
 			"Description" : "Type of EC2 instance to launch.",
 			"Type" : "String",
@@ -133,6 +141,16 @@
 						 "Action": "ec2:DescribeInstances",
 						 "Resource": "*"
 					  } ]
+                   }
+                },{
+                   "PolicyName": "AerospikeCloudWatchPolicy",
+                   "PolicyDocument": {
+                      "Version" : "2012-10-17",
+                      "Statement": [ {
+                         "Effect": "Allow",
+                         "Action": "cloudwatch:PutMetricData",
+                         "Resource": "*"
+                      } ]
 				   }
 				} ]
 			}
@@ -157,7 +175,7 @@
 				"DesiredCapacity" : { "Ref" : "NumberOfInstances"},
 				"MinSize" : "1",
 				"MaxSize" : "15",
-				"VPCZoneIdentifier" : [{ "Ref" : "Subnet" }],
+				"VPCZoneIdentifier" : [{ "Ref" : "VPCSubnet" }],
 				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"}, "PropagateAtLaunch" : "true" } ]
 			}
 		},
@@ -206,6 +224,7 @@
                 "IamInstanceProfile" : { "Ref" : "ClusterInstanceProfile" },
                 "ImageId" : { "Fn::FindInMap" : [ "VersionMap",  {"Ref" : "AerospikeVersion"} , { "Fn::FindInMap" : [ "RegionMap", { "Ref": "AWS::Region"}, "name"] } ] },
                 "AssociatePublicIpAddress" : "true",
+                "PlacementTenancy" : { "Ref" : "Tenancy" },
                 "SecurityGroups" : [ { "Fn::GetAtt" : [ "InstanceSecurityGroup", "GroupId" ] } ],
                 "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
                     "#!/bin/bash -xe\n",
@@ -275,6 +294,7 @@
 				"IamInstanceProfile" : { "Ref" : "ClusterInstanceProfile" },
 				"ImageId" : { "Fn::FindInMap" : [ "VersionMap",  {"Ref" : "AerospikeVersion"} , { "Fn::FindInMap" : [ "RegionMap", { "Ref": "AWS::Region"}, "name"] } ] },
 				"AssociatePublicIpAddress" : "true",
+                "PlacementTenancy" : { "Ref" : "Tenancy" },
 				"SecurityGroups" : [ { "Fn::GetAtt" : ["InstanceSecurityGroup", "GroupId"] } ],
 				"UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
                     "#!/bin/bash -xe\n",
@@ -297,6 +317,7 @@
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
                 "GroupDescription" : "Enable ports to access Aerospike",
+                "VpcId" : { "Ref" : "VPC" },
                 "SecurityGroupIngress" : [ {
                     "IpProtocol" : "tcp",
                     "FromPort" : "3000",
@@ -321,7 +342,7 @@
 		"InstanceSecurityGroupIngress" : {
 			"Type" : "AWS::EC2::SecurityGroupIngress",
 			"Properties" : {
-                "GroupName" : { "Ref" : "InstanceSecurityGroup" },
+                "GroupId" : { "Fn::GetAtt" : [ "InstanceSecurityGroup", "GroupId"] },
 				"IpProtocol" : "tcp",
 				"FromPort" : "3001",
 				"ToPort" : "3004",

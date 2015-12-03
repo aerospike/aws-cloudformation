@@ -126,7 +126,7 @@
 				   "Statement": [ {
 					  "Effect": "Allow",
 					  "Principal": {
-						 "Service": [ "ec2.amazonaws.com" ]
+						 "Service": [ "ec2.amazonaws.com","autoscaling.amazonaws.com" ]
 					  },
 					  "Action": [ "sts:AssumeRole" ]
 				   } ]
@@ -152,6 +152,26 @@
                          "Resource": "*"
                       } ]
 				   }
+                },{
+                    "PolicyName": "AerospikeSQSPolicy",
+                    "PolicyDocument" :{
+                        "Version" : "2012-10-17",
+                        "Statement": [ {
+                            "Effect": "Allow",
+                            "Action": "sqs:*",
+                            "Resource": { "Fn::GetAtt" : ["MigrationSQS", "Arn"]}
+                        } ]
+                    }   
+                },{         
+                    "PolicyName": "AerospikeAutoScalingPolicy",
+                    "PolicyDocument" :{
+                        "Version" : "2012-10-17",
+                        "Statement" : [ {
+                            "Effect": "Allow",
+                            "Action": "autoscaling:*",
+                            "Resource": "*"
+                        } ]        
+                    }
 				} ]
 			}
 		},
@@ -165,8 +185,22 @@
 				} ]
 			 }
 		},
-
-		
+        "MigrationSQS" : {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+                "ReceiveMessageWaitTimeSeconds": 10
+            }
+        },
+        "MigrationHook": {
+            "Type": "AWS::AutoScaling::LifecycleHook",
+            "DependsOn" : "MigrationSQS",
+            "Properties": {
+                "AutoScalingGroupName": { "Ref": "ClusterGroup" },
+                "LifecycleTransition": "autoscaling:EC2_INSTANCE_TERMINATING",
+                "NotificationTargetARN": { "Fn::GetAtt": [ "MigrationSQS", "Arn" ] },
+                "RoleARN": { "Fn::GetAtt": [ "ClusterRole", "Arn" ] }
+            }
+        },
 
 		"ClusterGroup" : {
 			"Type" : "AWS::AutoScaling::AutoScalingGroup",
@@ -202,12 +236,74 @@
                                    "    curl -s ",{ "Ref" :"NamespaceFile" }," >> $CONF; fi\n",
                                    "  /etc/init.d/aerospike start\n",
                                    "  /etc/init.d/amc start\n",
-                                   "echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n"
+                                   "echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n",
+                                   "(crontab -l 2>/dev/null; echo '*/5 * * * * /opt/aerospike/poll_sqs') | crontab -"
                                  ] ] },
                                 "mode" : "000744",
                                 "owner" : "root",
                                 "group" : "root"
+                            },
+                            "/opt/aerospike/poll_sqs" : {
+                                "content" : { "Fn::Join" : [ "" , [
+                                "#!/bin/bash\n",
+                                "# This script will prevent autoscaling from terminating\n",
+                                "# this instance until ASD migrations are completed\n",
+                                "set -e\n",
+                                "MYIP=$(curl 169.254.169.254/latest/meta-data/local-ipv4)\n",
+                                "MYNODE=$(curl 169.254.169.254/latest/meta-data/instance-id)\n",
+                                "REGION='",{ "Ref" : "AWS::Region"},"'   # CFT\n",
+                                "QUEUE='",{ "Ref" : "MigrationSQS"},"'    # CFT\n",
+                                "CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}')\n",
+                                "# Find SQS message with termination message\n",
+                                "FOUND=false\n",
+                                "MESSAGE=$(aws sqs receive-message --region  $REGION --queue-url $QUEUE  --region $REGION  --wait-time-seconds 10 --visibility-timeout 2 )\n",
+                                "BODY=$(echo $MESSAGE | jq '.Messages[0] .Body')\n",
+                                "RECEIPT=$(echo $MESSAGE | jq --raw-output '.Messages[0] .ReceiptHandle')\n",
+                                "LIFECYCLE=$(eval echo $BODY | jq --raw-output '.LifecycleTransition')\n",
+                                "INSTANCE=$(eval echo $BODY | jq --raw-output '.EC2InstanceId')\n",
+                                "if [[ $LIFECYCLE == 'autoscaling:EC2_INSTANCE_TERMINATING' ]] && [[ $INSTANCE == $MYNODE ]]; then\n",
+                                "    TOKEN=$(eval echo $BODY | jq --raw-output '.LifecycleActionToken')\n",
+                                "    HOOK=$(eval echo $BODY | jq --raw-output '.LifecycleHookName')\n",
+                                "    ASG=$(eval echo $BODY | jq --raw-output '.AutoScalingGroupName')\n",
+                                "    FOUND=true\n",
+                                "    aws sqs delete-message --region $REGION --queue-url $QUEUE --receipt-handle  $RECEIPT\n",
+                                "fi\n",
+                                "# If not not found, exit\n",
+                                "if [[ $FOUND == false ]]; then\n",
+                                "    exit 0\n",
+                                "fi\n",
+                                "# stop aerospike\n",
+                                "/etc/init.d/aerospike stop\n",
+                                "# Find first node that's not myself\n",
+                                "for I in $CLUSTER; do\n",
+                                "    if [[ $I == $MYIP ]]; then\n",
+                                "        continue;\n",
+                                "    fi\n",
+                                "    NODE=$I\n",
+                                "    break\n",
+                                "done\n",
+                                "# Grab migration info\n",
+                                "MIGRATIONS=$(asadm -h $NODE -e 'info service'| sed -n '4,/Number/ {/Number/!p}' | awk '{print $8}')\n",
+                                "DONE=true\n",
+                                "# check every node's migration status\n",
+                                "for NODE in $MIGRATIONS; do\n",
+                                "   if [[ $NODE != '(0,0,0)' ]] && [[ $NODE != 'N/E' ]]; then\n",
+                                "       $DONE=false\n",
+                                "       break;\n",
+                                "    fi\n",
+                                "done\n",
+                                "# if migrations not done, pause ASG actions. Otherwise, continue autoscaling termination.\n",
+                                "if [[ $DONE == false ]]; then\n",
+                                "    aws autoscaling record-lifecycle-action-heartbeat --region $REGION --lifecycle-action-token $TOKEN --auto-scaling-group-name $ASG --lifecycle-hook-name $HOOK\n",
+                                "    else\n",
+                                "    aws autoscaling complete-lifecycle-action --region $REGION --lifecycle-action-token $TOKEN --lifecycle-hook-name $HOOK --auto-scaling-group-name $ASG --lifecycle-action-result CONTINUE\n",
+                                "fi\n"
+                                ] ] },
+                                "mode" : "000744",
+                                "owner" : "root",
+                                "group" : "root"
                             }
+
                         },
                         "commands" : {
                             "01_form_asd_cluster" : {
@@ -269,6 +365,66 @@
                                    "  /etc/init.d/amc start\n",
                                    "echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n"
                                  ] ] },
+                                "mode" : "000744",
+                                "owner" : "root",
+                                "group" : "root"
+                            },
+                            "opt/aerospike/poll_sqs" : {
+                                "content" : { "Fn::Join" : [ "" , [
+                                "#!/bin/bash\n",
+                                "# This script will prevent autoscaling from terminating\n",
+                                "# this instance until ASD migrations are completed\n",
+                                "set -e\n",
+                                "MYIP=$(curl 169.254.169.254/latest/meta-data/local-ipv4)\n",
+                                "MYNODE=$(curl 169.254.169.254/latest/meta-data/instance-id)\n",
+                                "REGION='",{ "Ref" : "AWS::Region"},"'   # CFT\n",
+                                "QUEUE='",{ "Ref" : "MigrationSQS"},"'    # CFT\n",
+                                "CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}')\n",
+                                "# Find SQS message with termination message\n",
+                                "FOUND=false\n",
+                                "MESSAGE=$(aws sqs receive-message --region  $REGION --queue-url $QUEUE  --region $REGION  --wait-time-seconds 10 --visibility-timeout 2 )\n",
+                                "BODY=$(echo $MESSAGE | jq '.Messages[0] .Body')\n",
+                                "RECEIPT=$(echo $MESSAGE | jq --raw-output '.Messages[0] .ReceiptHandle')\n",
+                                "LIFECYCLE=$(eval echo $BODY | jq --raw-output '.LifecycleTransition')\n",
+                                "INSTANCE=$(eval echo $BODY | jq --raw-output '.EC2InstanceId')\n",
+                                "if [[ $LIFECYCLE == 'autoscaling:EC2_INSTANCE_TERMINATING' ]] && [[ $INSTANCE == $MYNODE ]]; then\n",
+                                "    TOKEN=$(eval echo $BODY | jq --raw-output '.LifecycleActionToken')\n",
+                                "    HOOK=$(eval echo $BODY | jq --raw-output '.LifecycleHookName')\n",
+                                "    ASG=$(eval echo $BODY | jq --raw-output '.AutoScalingGroupName')\n",
+                                "    FOUND=true\n",
+                                "    aws sqs delete-message --region $REGION --queue-url $QUEUE --receipt-handle  $RECEIPT\n",
+                                "fi\n",
+                                "# If not not found, exit\n",
+                                "if [[ $FOUND == false ]]; then\n",
+                                "    exit 0\n",
+                                "fi\n",
+                                "# stop aerospike\n",
+                                "/etc/init.d/aerospike stop\n",
+                                "# Find first node that's not myself\n",
+                                "for I in $CLUSTER; do\n",
+                                "    if [[ $I == $MYIP ]]; then\n",
+                                "        continue;\n",
+                                "    fi\n",
+                                "    NODE=$I\n",
+                                "    break\n",
+                                "done\n",
+                                "# Grab migration info\n",
+                                "MIGRATIONS=$(asadm -h $NODE -e 'info service'| sed -n '4,/Number/ {/Number/!p}' | awk '{print $8}')\n",
+                                "DONE=true\n",
+                                "# check every node's migration status\n",
+                                "for NODE in $MIGRATIONS; do\n",
+                                "   if [[ $NODE != '(0,0,0)' ]] && [[ $NODE != 'N/E' ]]; then\n",
+                                "       $DONE=false\n",
+                                "       break;\n",
+                                "    fi\n",
+                                "done\n",
+                                "# if migrations not done, pause ASG actions. Otherwise, continue autoscaling termination.\n",
+                                "if [[ $DONE == false ]]; then\n",
+                                "    aws autoscaling record-lifecycle-action-heartbeat --region $REGION --lifecycle-action-token $TOKEN --auto-scaling-group-name $ASG --lifecycle-hook-name $HOOK\n",
+                                "    else\n",
+                                "    aws autoscaling complete-lifecycle-action --region $REGION --lifecycle-action-token $TOKEN --lifecycle-hook-name $HOOK --auto-scaling-group-name $ASG --lifecycle-action-result CONTINUE\n",
+                                "fi\n"
+                                ] ] },
                                 "mode" : "000744",
                                 "owner" : "root",
                                 "group" : "root"

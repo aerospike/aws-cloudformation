@@ -33,6 +33,12 @@
             "Default" : "default",
             "AllowedValues" : [ "default", "dedicated" ]
         },
+        "PermitSSH" : { 
+            "Description" : "CIDR block that's permitted to SSH to the Aerospike Cluster",
+            "Type" : "String",
+            "AllowedPattern" : "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription" : "Must be in CIDR notation. To specify one specifc IPv4 address, append /32. eg: 192.168.1.100/32"
+        },
 		"NumberOfInstances" : {
 			"Description" : "Number of instances in the cluster",
 			"Type" : "Number",
@@ -241,6 +247,7 @@
                                    "  /etc/init.d/aerospike start\n",
                                    "  /etc/init.d/amc start\n",
                                    "echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n",
+
                                    "(crontab -l 2>/dev/null; echo '*/5 * * * * /opt/aerospike/poll_sqs') | crontab -\n",
                                    "  if [[ \"",{ "Ref" : "Cloudwatch" },"\" == \"yes\" ]]; then\n",
                                    "    (crontab -l 2>/dev/null; echo '*/5 * * * * /opt/aerospike/cloudwatch') | crontab -; fi\n"
@@ -414,6 +421,13 @@
                     "FromPort" : "3000",
                     "ToPort" : "3000",
                     "CidrIp" : "0.0.0.0/0"
+                },
+                {       
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "22",
+                    "ToPort" : "22",
+                    "CidrIp" : { "Ref" : "PermitSSH"}
+            
                 },
                 {
                     "IpProtocol" : "tcp",

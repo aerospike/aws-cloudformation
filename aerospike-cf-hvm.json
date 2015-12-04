@@ -32,7 +32,12 @@
             "Default" : "no",
             "AllowedValues": [ "yes" , "no" ]
         },
-
+        "PermitSSH" : {
+            "Description" : "CIDR block that's permitted to SSH to the Aerospike Cluster",
+            "Type" : "String",
+            "AllowedPattern" : "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription" : "Must be in CIDR notation. To specify one specifc IPv4 address, append /32. eg: 192.168.1.100/32"
+        },
 		"InstanceType" : {
 			"Description" : "Type of EC2 instance to launch.",
 			"Type" : "String",
@@ -475,9 +480,9 @@
 				},
 				{
 					"IpProtocol" : "tcp",
-					"FromPort" : "3001",
-					"ToPort" : "3004",
-					"CidrIp" : "10.0.0.0/16"
+					"FromPort" : "22",
+					"ToPort" : "22",
+					"CidrIp" : { "Ref" : "PermitSSH"}
 
 				},
 				{
@@ -495,6 +500,17 @@
 				} ],
 				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
 			}
-		}
+		},
+        "InstanceSecurityGroupIngress" : {
+            "Type" : "AWS::EC2::SecurityGroupIngress",
+            "Properties" : {
+                "GroupId" : { "Fn::GetAtt" : [ "InstanceSecurityGroup", "GroupId"] },
+                "IpProtocol" : "tcp",
+                "FromPort" : "3001",
+                "ToPort" : "3004",
+                "SourceSecurityGroupId" : { "Fn::GetAtt" : ["InstanceSecurityGroup", "GroupId"] }
+                },              
+            "DependsOn" : "InstanceSecurityGroup"
+        }          
 	}
 }

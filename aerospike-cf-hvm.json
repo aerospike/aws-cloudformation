@@ -26,6 +26,12 @@
             "MinValue" : "1",
             "MaxValue" : "15"
 		},
+        "Cloudwatch" : {
+            "Description" : "Add basic Aerospike metrics to Cloundwatch. Will incur Cloudwatch expenses ~ $24/mo/instance",
+            "Type" : "String",
+            "Default" : "no",
+            "AllowedValues": [ "yes" , "no" ]
+        },
 
 		"InstanceType" : {
 			"Description" : "Type of EC2 instance to launch.",
@@ -106,8 +112,7 @@
     },
     
     "Conditions" : {
-        "NotUsingEBS" : { "Fn::Equals" : [ { "Ref" : "EBS" }, 0  ] },
-        "UsingEBS" : { "Fn::Not" : [ { "Fn::Equals" : [ { "Ref" : "EBS" }, 0 ]} ] }
+        "NotUsingEBS" : { "Fn::Equals" : [ { "Ref" : "EBS" }, 0  ] }
     },
 
 	"Resources" : {
@@ -199,7 +204,7 @@
 			"Type" : "AWS::AutoScaling::AutoScalingGroup",
 			"DependsOn" : "GatewayToInternet",
 			"Properties" : {
-				"LaunchConfigurationName" : { "Fn::If" : [ "NotUsingEBS", { "Ref" : "LaunchConfig" }, { "Ref" : "EBSLaunchConfig" } ] },
+				"LaunchConfigurationName" : { "Ref" : "LaunchConfig" }, 
 				"DesiredCapacity" : { "Ref" : "NumberOfInstances"},
 				"MinSize" : "1",
 				"MaxSize" : "15",
@@ -211,7 +216,6 @@
         "LaunchConfig" : {
             "Type" : "AWS::AutoScaling::LaunchConfiguration",
             "DependsOn" : "GatewayToInternet",
-            "Condition" : "NotUsingEBS",
             "Metadata" : {
                 "AWS::CloudFormation::Init" : {
                     "config" : {
@@ -235,7 +239,59 @@
                                    "  /etc/init.d/aerospike start\n",
                                    "  /etc/init.d/amc start\n",
                                    "echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n",
-                                   "(crontab -l 2>/dev/null; echo '*/5 * * * * /opt/aerospike/poll_sqs') | crontab -"
+                                   "(crontab -l 2>/dev/null; echo '*/5 * * * * /opt/aerospike/poll_sqs') | crontab -\n",
+                                   "  if [[ \"",{ "Ref" : "Cloudwatch" },"\" == \"yes\" ]]; then\n",
+                                   "    (crontab -l 2>/dev/null; echo '*/5 * * * * /opt/aerospike/cloudwatch') | crontab -; fi\n"
+                                 ] ] },
+                                "mode" : "000744",
+                                "owner" : "root",
+                                "group" : "root"
+                            },
+                            "/opt/aerospike/cloudwatch" : {
+                                "content" : {  "Fn::Join" : ["", [
+                                   "#!/bin/bash\n",
+                                   "METRICS=$(asinfo -v stats -l)\n",     
+                                   "NAMESPACE=aerospike\n",  
+                                   "REGION=",{ "Ref" : "AWS::Region" },"\n",
+                                   "INSTANCE=$(curl 169.254.169.254/latest/meta-data/instance-id)\n",
+                                   "CLUSTER=",{ "Ref" : "AWS::StackId" },"\n",
+                                   "for L in $METRICS; do\n",
+                                   "    LINE=(${L//=/ })\n",
+                                   "    case ${LINE[0]} in\n",
+                                   "    cluster_integrity)\n",
+                                   "        if [[ ${LINE[1]} != \"true\" ]]; then\n",
+                                   "            INTEGRITY_ERROR=1\n",
+                                   "        else\n",
+                                   "            INTEGRITY_ERROR=0\n",
+                                   "        fi\n",
+                                   "        ;;\n",
+                                   "    total-bytes-memory)\n",
+                                   "        TBM=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    used-bytes-memory)\n",
+                                   "        UBM=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    total-bytes-disk)\n",
+                                   "        TBD=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    used-bytes-disk)\n",
+                                   "        UBD=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    objects)\n",
+                                   "        OBJECTS=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    *)\n",
+                                   "        continue\n",
+                                   "        ;;\n",
+                                   "    esac\n",
+                                   "done\n",
+                                   "FM=$(expr $TBM - $UBM)\n",
+                                   "FD=$(expr $TBD - $UBD)\n",
+                                   "# Submit metrics\n",
+                                   "aws cloudwatch --region $REGION put-metric-data --dimensions Cluster=$CLUSTER,Instance=$INSTANCE --namespace $NAMESPACE --value $INTEGRITY_ERROR --metric-name 'Cluster Integrity'\n",
+                                   "aws cloudwatch --region $REGION put-metric-data --dimensions Cluster=$CLUSTER,Instance=$INSTANCE --namespace $NAMESPACE --value $FM --metric-name 'Free Memory' --unit 'Bytes'\n",
+                                   "aws cloudwatch --region $REGION put-metric-data --dimensions Cluster=$CLUSTER,Instance=$INSTANCE --namespace $NAMESPACE --value $FD --metric-name 'Free Disk' --unit 'Bytes'\n",
+                                   "aws cloudwatch --region $REGION put-metric-data --dimensions Cluster=$CLUSTER,Instance=$INSTANCE --namespace $NAMESPACE --value $OBJECTS --metric-name 'Number of Objects' --unit 'Count'\n"
                                  ] ] },
                                 "mode" : "000744",
                                 "owner" : "root",
@@ -313,6 +369,14 @@
             },
             "Properties" : {
                 "InstanceType" : { "Ref" : "InstanceType"},
+                "BlockDeviceMappings" : { "Fn::If" : [ "NotUsingEBS",
+                    { "Ref" : "AWS::NoValue" },
+                    [ {
+                    "DeviceName" : "/dev/sdg",
+                    "Ebs" : { "VolumeSize" : {"Ref" : "EBS" },
+                             "VolumeType" : "gp2" }
+                    } ]
+                ] },
                 "KeyName" : { "Ref" : "KeyPair" },
                 "IamInstanceProfile" : { "Ref" : "ClusterInstanceProfile" },
                 "ImageId" : { "Fn::FindInMap" : [ "VersionMap",  {"Ref" : "AerospikeVersion"} , { "Fn::FindInMap" : [ "RegionMap", { "Ref": "AWS::Region"}, "name"] } ] },
@@ -335,139 +399,6 @@
                 }
             }
         },
-
-		"EBSLaunchConfig" : {
-			"Type" : "AWS::AutoScaling::LaunchConfiguration",
-			"DependsOn" : "GatewayToInternet",
-            "Condition" : "UsingEBS",
-            "Metadata" : {
-                "AWS::CloudFormation::Init" : {
-                    "config" : {
-                        "files" : {
-                            "/tmp/aerospike_cluster" : {
-                                "content" : {  "Fn::Join" : ["", [
-                                   "#!/bin/bash\n",
-                                   "echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
-                                   "  PUBLICIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)\n",
-                                   "  CONF=/etc/aerospike/aerospike.conf\n",
-                                   "  sed -i \"/port 3000/a \\\t\taccess-address $PUBLICIP virtual\" $CONF\n",
-                                   "  ###Point to all instances using the mesh-address config option\n",
-                                   "  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
-                                   "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
-                                   "  sed -i '/.*mesh-seed-address-port/d' $CONF\n",
-                                   "  for i in $PRIVATEIP; do ",
-                                   "    sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" $CONF\n",
-                                   "  done \n",
-                                   "  if [ ! -z \"",{ "Ref" :"NamespaceFile" },"\" ]; then\n",
-                                   "    curl -s ",{ "Ref" :"NamespaceFile" }," >> $CONF; fi\n",
-                                   "  /etc/init.d/aerospike start\n",
-                                   "  /etc/init.d/amc start\n",
-                                   "echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n",
-                                   "(crontab -l 2>/dev/null; echo '*/5 * * * * /opt/aerospike/poll_sqs') | crontab -"
-                                 ] ] },
-                                "mode" : "000744",
-                                "owner" : "root",
-                                "group" : "root"
-                            },
-                           "/opt/aerospike/poll_sqs" : {
-                                "content" : { "Fn::Join" : [ "" , [
-                                "#!/bin/bash\n",
-                                "# This script will prevent autoscaling from terminating\n",
-                                "# this instance until ASD migrations are completed\n",
-                                "set -e\n",
-                                "MYIP=$(curl 169.254.169.254/latest/meta-data/local-ipv4)\n",
-                                "MYNODE=$(curl 169.254.169.254/latest/meta-data/instance-id)\n",
-                                "REGION='",{ "Ref" : "AWS::Region"},"'   # CFT\n",
-                                "QUEUE='",{ "Ref" : "MigrationSQS"},"'    # CFT\n",
-                                "CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}')\n",
-                                "# Find SQS message with termination message\n",
-                                "FOUND=false\n",
-                                "MESSAGE=$(aws sqs receive-message --region  $REGION --queue-url $QUEUE  --region $REGION  --wait-time-seconds 10 --visibility-timeout 2 )\n",
-                                "BODY=$(echo $MESSAGE | jq '.Messages[0] .Body')\n",
-                                "RECEIPT=$(echo $MESSAGE | jq --raw-output '.Messages[0] .ReceiptHandle')\n",
-                                "LIFECYCLE=$(eval echo $BODY | jq --raw-output '.LifecycleTransition')\n",
-                                "INSTANCE=$(eval echo $BODY | jq --raw-output '.EC2InstanceId')\n",
-                                "if [[ $LIFECYCLE == 'autoscaling:EC2_INSTANCE_TERMINATING' ]] && [[ $INSTANCE == $MYNODE ]]; then\n",
-                                "    TOKEN=$(eval echo $BODY | jq --raw-output '.LifecycleActionToken')\n",
-                                "    HOOK=$(eval echo $BODY | jq --raw-output '.LifecycleHookName')\n",
-                                "    ASG=$(eval echo $BODY | jq --raw-output '.AutoScalingGroupName')\n",
-                                "    FOUND=true\n",
-                                "    aws sqs delete-message --region $REGION --queue-url $QUEUE --receipt-handle  $RECEIPT\n",
-                                "fi\n",
-                                "# If not not found, exit\n",
-                                "if [[ $FOUND == false ]]; then\n",
-                                "    exit 0\n",
-                                "fi\n",
-                                "# stop aerospike\n",
-                                "/etc/init.d/aerospike stop\n",
-                                "# Find first node that's not myself\n",
-                                "for I in $CLUSTER; do\n",
-                                "    if [[ $I == $MYIP ]]; then\n",
-                                "        continue;\n",
-                                "    fi\n",
-                                "    NODE=$I\n",
-                                "    break\n",
-                                "done\n",
-                                "# Grab migration info\n",
-                                "MIGRATIONS=$(asadm -h $NODE -e 'info service'| sed -n '4,/Number/ {/Number/!p}' | awk '{print $8}')\n",
-                                "DONE=true\n",
-                                "# check every node's migration status\n",
-                                "for NODE in $MIGRATIONS; do\n",
-                                "   if [[ $NODE != '(0,0,0)' ]] && [[ $NODE != 'N/E' ]]; then\n",
-                                "       $DONE=false\n",
-                                "       break;\n",
-                                "    fi\n",
-                                "done\n",
-                                "# if migrations not done, pause ASG actions. Otherwise, continue autoscaling termination.\n",
-                                "if [[ $DONE == false ]]; then\n",
-                                "    aws autoscaling record-lifecycle-action-heartbeat --region $REGION --lifecycle-action-token $TOKEN --auto-scaling-group-name $ASG --lifecycle-hook-name $HOOK\n",
-                                "    else\n",
-                                "    aws autoscaling complete-lifecycle-action --region $REGION --lifecycle-action-token $TOKEN --lifecycle-hook-name $HOOK --auto-scaling-group-name $ASG --lifecycle-action-result CONTINUE\n",
-                                "fi\n"
-                                ] ] },
-                                "mode" : "000744",
-                                "owner" : "root",
-                                "group" : "root"
-                            }
-                        },
-                        "commands" : {
-                            "01_form_asd_cluster" : {
-                                "command" : "/tmp/aerospike_cluster",
-                                "cwd" : "/tmp"
-                            }
-                        }
-                    }
-                }
-            },
-			"Properties" : {
-				"InstanceType" : { "Ref" : "InstanceType"},
-				"KeyName" : { "Ref" : "KeyPair" },
-                "BlockDeviceMappings" : [ {
-                    "DeviceName" : "/dev/sdg",
-                    "Ebs" : { "VolumeSize" : {"Ref" : "EBS" },
-                             "VolumeType" : "gp2" }
-                }],
-				"IamInstanceProfile" : { "Ref" : "ClusterInstanceProfile" },
-				"ImageId" : { "Fn::FindInMap" : [ "VersionMap",  {"Ref" : "AerospikeVersion"} , { "Fn::FindInMap" : [ "RegionMap", { "Ref": "AWS::Region"}, "name"] } ] },
-				"AssociatePublicIpAddress" : "true",
-				"SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
-				"UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
-                    "#!/bin/bash -xe\n",
-                    "yum update -y aws-cfn-bootstrap\n",
-                    "yum install -y jq\n",
-                    "/opt/aws/bin/cfn-init -v ",
-                    "         --stack ", { "Ref" : "AWS::StackName" },
-                    "         --resource EBSLaunchConfig ",
-                    "         --region ", { "Ref" : "AWS::Region" }, "\n",
-
-                    "/opt/aws/bin/cfn-signal -e $? ",
-                    "         --stack ", { "Ref" : "AWS::StackName" },
-                    "         --resource ClusterGroup ",
-                    "         --region ", { "Ref" : "AWS::Region" }, "\n"
-					] ] }
-				}
-			}
-		},
 
 		"VPC" : {
 			"Type" : "AWS::EC2::VPC",

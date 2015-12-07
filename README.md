@@ -23,20 +23,31 @@ Change the region as per your requirement.
 
 1. Give a name to your stack
 
-2. Choose the Aerospike Version you'd like to deploy.
+2. Choose the Aerospike version you'd like to deploy.
 
-3. Choose an instance type from the ones available at
+3. Select if you'd like to publish base statistics to Cloudwatch.
+  * Statistics are: Cluster Integrity, Free Memory, Free Disk and Number of Objects
+
+4. Enter the size of an EBS volume you'd like to use. EBS volumes are always type gp2 and attached under /dev/sdg. Enter 0 to not use EBS volumes. An ephemeral volume is always available (if the instance type has them) under /dev/sdf
+
+5. Choose an instance type from the ones available at
 http://aws.amazon.com/ec2/instance-types/  
 For more info on which instance to use, refer to Aerospike [AWS Capacity Planning](http://www.aerospike.com/docs/operations/aws/capacity_planning.html).
 
-4. Choose a valid existing keypair. If you don't have a keypair in AWS already, [create one first](http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-create-key-pair.html) If you do not provide a keypair file name, you will not be able to ssh into the instances.
+6. Choose a valid existing keypair. If you don't have a keypair in AWS already, [create one first](http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-create-key-pair.html) 
 
-5. *(Optional)* Enter the URL where CloudFormation can download your customized namespace settings. This will be appended to the end of the aerospike.conf file as-is.
+7. *(Optional, but suggested)* Enter the URL where CloudFormation can download your customized namespace settings. This will be appended to the end of the aerospike.conf file as-is. 
   * The simplest method is to upload a file to S3, then making the file public. The direct link is available via the properties tab of the S3 object. 
+  * Your custom namespace settings should take advantage of the ephemeral storage at /dev/sdf and your provisioned EBS volume at /dev/sdg.
+  * Custom namespace file is everything under the namespace section of aerospike.conf file, including the namespace { } declaration.
 
-6. Enter number of instances as required.
+8. Enter number of instances as required.
 
-7. Click Next
+9. Enter the CIDR block from which you permit SSH access. You can use many online sites like [whatismyip](http://whatismyip.org/) to find out your IP. For single IP addresses appending /32 is required. Only 1 entry is permitted.
+
+10. Choose if you'd like dedicated tenancy. There will be additional costs with this option.
+
+11. Click Next
 
 **Options** (Optional)
 * Enter additional tags as desired.
@@ -53,12 +64,18 @@ Go to your EC2 console and login to the instances using the IPs listed against t
 
 Fire off some load using the [java benchmark client](http://www.aerospike.com/docs/client/java/benchmarks.html) included in the instances and watch the load with [AMC](http://www.aerospike.com/docs/amc/) 
 
-## SSH Access
+## System Access
 
-SSH access is not required to use Aerospike. With this in mind, and in accord with best seurity practices, port 22 is not open in the security group definition.
+SSH access is enabled on the instances under the **ec2-user** user using the key-pair you've selected during stack creation.  You are prompted to enter the IP (in CIDR format) from where you permit SSH access also during stack creation. 
 
-You may still open port 22 yourself. Once the port is opened, you may SSH in as the **ec2-user** using the keypair configured through this cloudformation script.
-
+## Cost
+* EC2 instances
+* GP2 EBS volume per instance 
+* Cloudwatch metrics per instance
+  * 4 metrics x 5 minute polling ~= 35000 API requests/mo = $0.35 + $2 for 4 metrics ~= $2.35
+* SQS queue
+  * 1 message on creation, 1 message per instance per scale-in. Fits into free tier. Would require a constant >2.5 scale-in events per second to exceed free tier.
+* Dedicated tenancy. See [Dedicated instance pricing](https://aws.amazon.com/ec2/purchasing-options/dedicated-instances/) on AWS.
 
 
 ## Architecture
@@ -68,6 +85,6 @@ Upon instance startup, instances will run a userdata script that will query AWS 
 
 This script will then parse out the private IP addresses and modify the clustering section of aerospike configs with said IPs.
 
-This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster.
+This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster. **Nodes leaving the cluster must be triggered by autoscaling to keep guarantee data consistency**. On scale-in, an SQS message will be sent with information on which node is being terminated. The each node polls SQS for its own message. Once the node finds an SQS message for itself, it first checks for data migrations. If no migrations are occuring, it will stop ASD and continues the autoscaling termination process. If there are data migrations occuring, it will interrupt the scale-in, leaving the instance running and cluster untouched,  and wait for the next poll. **Only 1 node may scale-in at a time to ensure no data loss**
 
 By default ping, Aerospike port 3000 and AMC port 8081 are open globally (0.0.0.0/0). You may want to lock this down to just your own IP range.

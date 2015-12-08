@@ -40,6 +40,7 @@ For more info on which instance to use, refer to Aerospike [AWS Capacity Plannin
   * The simplest method is to upload a file to S3, then making the file public. The direct link is available via the properties tab of the S3 object. 
   * Your custom namespace settings should take advantage of the ephemeral storage at /dev/sdf and your provisioned EBS volume at /dev/sdg.
   * Custom namespace file is everything under the namespace section of aerospike.conf file, including the namespace { } declaration.
+  * See the included custom_namespace.conf file as an example
 
 8. Enter number of instances as required.
 

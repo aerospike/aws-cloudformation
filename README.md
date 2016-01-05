@@ -32,7 +32,7 @@ Change the region as per your requirement.
 
 5. Choose an instance type from the ones available at
 http://aws.amazon.com/ec2/instance-types/  
-For more info on which instance to use, refer to Aerospike [AWS Capacity Planning](http://www.aerospike.com/docs/operations/aws/capacity_planning.html).
+For more info on which instance to use, refer to Aerospike [AWS Capacity Planning](http://www.aerospike.com/docs/deploy_guides/aws/plan/).
 
 6. Choose a valid existing keypair. If you don't have a keypair in AWS already, [create one first](http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-create-key-pair.html) 
 

@@ -22,7 +22,7 @@
             "Type" : "AWS::EC2::Subnet::Id"
         },
         "Cloudwatch" : {
-            "Description" : "Add basic Aerospike metrics to Cloundwatch. Will incur Cloudwatch expenses ~ $24/mo/instance",
+            "Description" : "Add basic Aerospike metrics to Cloudwatch. Will incur Cloudwatch expenses ~ $24/mo/instance",
             "Type" : "String",
             "Default" : "no",
             "AllowedValues": [ "yes" , "no" ]

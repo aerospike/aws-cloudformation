@@ -193,7 +193,7 @@
                                    "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
                                    "  sed -i '/.*mesh-seed-address-port/d' $CONF\n",
                                    "  for i in $PRIVATEIP; do ",
-                                   "    sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" $CONF\n",
+                                   "    sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" $CONF; done\n",
                                     "  CODE=$(curl -Is",{ "Ref" :"NamespaceFile" }," | head -n 1 | cut -d$' ' -f2)\n",
                                    "  if [ \"$CODE\" != \"200\" ]; then echo 'Namespace File not found' >> /var/log/awsuserdatascript\n",
                                    "  else  curl -s ",{ "Ref" :"NamespaceFile" }," >> $CONF; fi\n",

@@ -92,3 +92,21 @@ By default ping, Aerospike port 3000 and AMC port 8081 are open globally (0.0.0.
 
 ## Pricing
 The Aerospike AMI is a free subscription. You will be prompted to subscribe to the AMI before this CF template can be used. Pricing is dependant on the instance type used. Please see EC2 pricing [here](https://aws.amazon.com/ec2/pricing/). Cost will increase if launching more than 1 instance.
+
+# Clients
+An AMI pre-loaded with most clients is available for quick development uptake.
+
+Owner: 262212597706
+
+| Region         | AMI          |
+|----------------|--------------|
+| us-east-1      | ami-34b6ed5e |
+| us-west-1      | ami-c5ed98a5 |
+| us-west-2      | ami-01637960 |
+| eu-central-1   | ami-06e4fa6a |
+| eu-west-1      | ami-cf268ebc |
+| ap-northeast-1 | ami-ed152883 |
+| ap-northeast-2 | ami-5dce0033 |
+| ap-southeast-1 | ami-41844822 |
+| ap-southeast-2 | ami-d75673b4 |
+| sa-east-1      | ami-14840578 |

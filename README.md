@@ -1,7 +1,7 @@
 aws-cloudformation
 ==================
 
-AWS CloudFormation scripts related to Aerospike
+AWS CloudFormation scripts used for [Amazon's Marketplace](https://aws.amazon.com/marketplace/pp/B00LW9382A/)
 
 Download a copy of this repo using either the Download link or use git clone.
 

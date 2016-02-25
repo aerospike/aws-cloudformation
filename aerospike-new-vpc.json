@@ -35,7 +35,7 @@
     "InstanceType" : {
         "Description" : "Type of EC2 instance to launch.",
         "Type" : "String",
-        "Default" : "m3.large",
+        "Default" : "t2.large",
         "AllowedValues" : [ "t2.micro", "t2.small", "t2.medium", "t2.large",
                             "m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", 
                             "m4.large", "m4.xlarge", "m4.2xlarge", "m4.4xlarge", "m4.10xlarge",
@@ -60,16 +60,16 @@
 
   "Mappings" : {
     "RegionMap" : {
-        "us-east-1" : {"name": "ami-2d1b3847"},
-        "us-west-2" : {"name": "ami-234ca843"},
-        "us-west-1" : {"name": "ami-61621501"},
-        "eu-west-1" : {"name": "ami-647dc917"},
-        "eu-central-1" : {"name" : "ami-5b594137"},
-        "ap-southeast-1" : {"name": "ami-34cd0257"},
-        "ap-southeast-2" : {"name": "ami-fb5f7b98"},
-        "ap-northeast-1" : {"name": "ami-00c5fc6e"},
-        "ap-northeast-2" : {"name": "ami-9ee32df0"},
-        "sa-east-1" : {"name": "ami-f389099f"}
+        "us-east-1" : {"name": "ami-84af84ee"},
+        "us-west-2" : {"name": "ami-ac19f8cc"},
+        "us-west-1" : {"name": "ami-1095e370"},
+        "eu-west-1" : {"name": "ami-04942477"},
+        "eu-central-1" : {"name" : "ami-521c073e"},
+        "ap-southeast-1" : {"name": "ami-41e62822"},
+        "ap-southeast-2" : {"name": "ami-a3587fc0"},
+        "ap-northeast-1" : {"name": "ami-e41d198a"},
+        "ap-northeast-2" : {"name": "ami-c103cdaf"},
+        "sa-east-1" : {"name": "ami-fad85b96"}
     }
   },
   

@@ -68,16 +68,16 @@
 
 	"Mappings" : {
     "RegionMap" : {
-        "us-east-1" : {"name": "ami-84af84ee"},
-        "us-west-2" : {"name": "ami-ac19f8cc"},
-        "us-west-1" : {"name": "ami-1095e370"},
-        "eu-west-1" : {"name": "ami-04942477"},
-        "eu-central-1" : {"name" : "ami-521c073e"},
-        "ap-southeast-1" : {"name": "ami-41e62822"},
-        "ap-southeast-2" : {"name": "ami-a3587fc0"},
-        "ap-northeast-1" : {"name": "ami-e41d198a"},
-        "ap-northeast-2" : {"name": "ami-c103cdaf"},
-        "sa-east-1" : {"name": "ami-fad85b96"}
+        "us-east-1" : {"name": "ami-905c61fa"},
+        "us-west-2" : {"name": "ami-eb52b08b"},
+        "us-west-1" : {"name": "ami-57077737"},
+        "eu-west-1" : {"name": "ami-ff5fe38c"},
+        "eu-central-1" : {"name" : "ami-c9b653a6"},
+        "ap-southeast-1" : {"name": "ami-5d26ef3e"},
+        "ap-southeast-2" : {"name": "ami-ee1d3b8d"},
+        "ap-northeast-1" : {"name": "ami-5287843c"},
+        "ap-northeast-2" : {"name": "ami-4731ff29"},
+        "sa-east-1" : {"name": "ami-969b19fa"}
     }
   },
     
@@ -106,7 +106,10 @@
                       "Version" : "2012-10-17",
                       "Statement": [ {
                          "Effect": "Allow",
-                         "Action": "ec2:DescribeInstances",
+                         "Action": [
+						 	"ec2:DescribeInstances",
+							"ec2:DescribeVpcAttribute"
+							],
                          "Resource": "*"
                       } ]
                    }
@@ -194,9 +197,14 @@
                                    "echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
                                    "  PUBLICIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)\n",
                                    "  CONF=/etc/aerospike/aerospike.conf\n",
+								   "  REGION=",{ "Ref" : "AWS::Region"},"\n",
                                    "  sed -i \"/port 3000/a \\\t\taccess-address $PUBLICIP virtual\" $CONF\n",
                                    "  ###Point to all instances using the mesh-address config option\n",
-                                   "  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
+								   "  HOSTNAMES=$(aws ec2 describe-vpc-attribute --vpc-id=",{ "Ref":"VPC"}," --region=$REGION --attribute=enableDnsHostnames --output=text | grep ENABLEDNSHOSTNAMES | awk '{print $2}')\n",
+								   "  if [[ \"$HOSTNAMES\" == \"True\" ]]; then\n",
+                                   "    PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
+                                   "  else PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $3}') \n",
+								   "  fi\n",
                                    "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
                                    "  sed -i '/.*mesh-seed-address-port/d' $CONF\n",
                                    "  for i in $PRIVATEIP; do ",
@@ -275,7 +283,11 @@
                                 "MYNODE=$(curl 169.254.169.254/latest/meta-data/instance-id)\n",
                                 "REGION='",{ "Ref" : "AWS::Region"},"'   # CFT\n",
                                 "QUEUE='",{ "Ref" : "MigrationSQS"},"'    # CFT\n",
-                                "CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}')\n",
+								"HOSTNAMES=$(aws ec2 describe-vpc-attribute --vpc-id=",{ "Ref":"VPC"}," --region=$REGION --attribute=enableDnsHostnames --output=text | grep ENABLEDNSHOSTNAMES | awk '{print $2}')\n",
+								"if [[ \"$HOSTNAMES\" == \"True\" ]]; then\n",
+                                "  CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}')\n",
+								"else CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $3}')\n",
+								"fi\n",
                                 "# Find SQS message with termination message\n",
                                 "FOUND=false\n",
                                 "MESSAGE=$(aws sqs receive-message --region  $REGION --queue-url $QUEUE  --region $REGION  --wait-time-seconds 10 --visibility-timeout 2 )\n",                                "BODY=$(echo $MESSAGE | jq '.Messages[0] .Body')\n",

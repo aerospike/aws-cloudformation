@@ -1,12 +1,12 @@
 {
-	"AWSTemplateFormatVersion" : "2010-09-09",
-	"Description" : "Template to create an Aerospike cluster",
-	"Parameters" : {
-		"KeyPair" : {
-			"Description" : "Name of the KeyPair that would be used to ssh into the instances",
-			"Type" : "AWS::EC2::KeyPair::KeyName",
-			"ConstraintDescription" : "Please specify the name of the keypair that you use to login"
-		},
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "Template to create an Aerospike cluster",
+    "Parameters" : {
+        "KeyPair" : {
+            "Description" : "Name of the KeyPair that would be used to ssh into the instances",
+            "Type" : "AWS::EC2::KeyPair::KeyName",
+            "ConstraintDescription" : "Please specify the name of the keypair that you use to login"
+        },
     "VPC" : {
         "Description" : "The VPC to deploy into",
         "Type" : "AWS::EC2::VPC::Id"
@@ -40,19 +40,19 @@
         "AllowedPattern" : "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
         "ConstraintDescription" : "Must be in CIDR notation. To specify one specifc IPv4 address, append /32. eg: 192.168.1.100/32"
     },
-		"InstanceType" : {
-			"Description" : "Type of EC2 instance to launch.",
-			"Type" : "String",
-			"Default" : "t2.large",
-			"AllowedValues" : [ "t2.micro", "t2.small", "t2.medium", "t2.large",
-					"m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", 
-					"m4.large", "m4.xlarge", "m4.2xlarge", "m4.4xlarge", "m4.10xlarge",
-					"c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge",
-					"c4.large", "c4.xlarge", "c4.2xlarge", "c4.4xlarge", "c4.8xlarge",
-					"r3.large", "r3.xlarge", "r3.2xlarge", "r3.4xlarge", "r3.8xlarge",
-					"i2.xlarge", "i2.2xlarge", "i2.4xlarge", "i2.8xlarge"
-					]
-		},
+        "InstanceType" : {
+            "Description" : "Type of EC2 instance to launch.",
+            "Type" : "String",
+            "Default" : "t2.large",
+            "AllowedValues" : [ "t2.micro", "t2.small", "t2.medium", "t2.large",
+                    "m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", 
+                    "m4.large", "m4.xlarge", "m4.2xlarge", "m4.4xlarge", "m4.10xlarge",
+                    "c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge",
+                    "c4.large", "c4.xlarge", "c4.2xlarge", "c4.4xlarge", "c4.8xlarge",
+                    "r3.large", "r3.xlarge", "r3.2xlarge", "r3.4xlarge", "r3.8xlarge",
+                    "i2.xlarge", "i2.2xlarge", "i2.4xlarge", "i2.8xlarge"
+                    ]
+        },
     "EBS" : {
         "Description" : "Size of EBS SSD volume in GB. The volume will attach under /dev/sdg. Limit of 16000. Enter 0 to not use EBS.",
         "Type" : "Number",
@@ -64,20 +64,20 @@
         "Description" : "(Optional) Location of your namespace definition. Must be publically downloadable. Will append file directly to end of aerospike.conf",
         "Type" : "String"
     }
-	},
+    },
 
-	"Mappings" : {
+    "Mappings" : {
     "RegionMap" : {
-        "us-east-1" : {"name": "ami-d62b25bc"},
-        "us-west-2" : {"name": "ami-9b3bd0fb"},
-        "us-west-1" : {"name": "ami-6d1b660d"},
-        "eu-west-1" : {"name": "ami-d39c1ba0"},
-        "eu-central-1" : {"name" : "ami-f32fc99c"},
-        "ap-southeast-1" : {"name": "ami-9bc50ff8"},
-        "ap-southeast-2" : {"name": "ami-9b7350f8"},
-        "ap-northeast-1" : {"name": "ami-03c7d36d"},
-        "ap-northeast-2" : {"name": "ami-58a76e36"},
-        "sa-east-1" : {"name": "ami-0865e964"}
+        "us-east-1" : {"name": "ami-dd4f51b7"},
+        "us-west-2" : {"name": "ami-be08fede"},
+        "us-west-1" : {"name": "ami-1b9ce37b"},
+        "eu-west-1" : {"name": "ami-3fd25e4c"},
+        "eu-central-1" : {"name" : "ami-7ca14213"},
+        "ap-southeast-1" : {"name": "ami-1dc2167e"},
+        "ap-southeast-2" : {"name": "ami-b56b46d6"},
+        "ap-northeast-1" : {"name": "ami-d11b04bf"},
+        "ap-northeast-2" : {"name": "ami-840ec6ea"},
+        "sa-east-1" : {"name": "ami-17b43a7b"}
     }
   },
     
@@ -85,21 +85,21 @@
       "NotUsingEBS" : { "Fn::Equals" : [ { "Ref" : "EBS" }, 0  ] }
   },
 
-	"Resources" : {
-		"ClusterRole" : {
-			 "Type": "AWS::IAM::Role",
-			 "Properties": {
-				"AssumeRolePolicyDocument": {
-				   "Version" : "2012-10-17",
-				   "Statement": [ {
-					  "Effect": "Allow",
-					  "Principal": {
-						 "Service": [ "ec2.amazonaws.com","autoscaling.amazonaws.com" ]
-					  },
-					  "Action": [ "sts:AssumeRole" ]
-				   } ]
-				},
-				"Path": "/",
+    "Resources" : {
+        "ClusterRole" : {
+             "Type": "AWS::IAM::Role",
+             "Properties": {
+                "AssumeRolePolicyDocument": {
+                   "Version" : "2012-10-17",
+                   "Statement": [ {
+                      "Effect": "Allow",
+                      "Principal": {
+                         "Service": [ "ec2.amazonaws.com","autoscaling.amazonaws.com" ]
+                      },
+                      "Action": [ "sts:AssumeRole" ]
+                   } ]
+                },
+                "Path": "/",
                 "Policies": [ {
                    "PolicyName": "AerospikeClusterPolicy",
                    "PolicyDocument": {
@@ -107,9 +107,9 @@
                       "Statement": [ {
                          "Effect": "Allow",
                          "Action": [
-						 	"ec2:DescribeInstances",
-							"ec2:DescribeVpcAttribute"
-							],
+                             "ec2:DescribeInstances",
+                            "ec2:DescribeVpcAttribute"
+                            ],
                          "Resource": "*"
                       } ]
                    }
@@ -148,15 +148,15 @@
         },
 
 
-		"ClusterInstanceProfile": {
-			 "Type": "AWS::IAM::InstanceProfile",
-			 "Properties": {
-				"Path": "/",
-				"Roles": [ {
-				   "Ref": "ClusterRole"
-				} ]
-			 }
-		},
+        "ClusterInstanceProfile": {
+             "Type": "AWS::IAM::InstanceProfile",
+             "Properties": {
+                "Path": "/",
+                "Roles": [ {
+                   "Ref": "ClusterRole"
+                } ]
+             }
+        },
         "MigrationSQS" : {
             "Type": "AWS::SQS::Queue",
             "Properties": {
@@ -174,17 +174,17 @@
             }
         },
 
-		"ClusterGroup" : {
-			"Type" : "AWS::AutoScaling::AutoScalingGroup",
-			"Properties" : {
-				"LaunchConfigurationName" :  { "Ref" : "LaunchConfig" },
-				"DesiredCapacity" : { "Ref" : "NumberOfInstances"},
-				"MinSize" : "1",
-				"MaxSize" : "15",
-				"VPCZoneIdentifier" : [{ "Ref" : "VPCSubnet" }],
-				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"}, "PropagateAtLaunch" : "true" } ]
-			}
-		},
+        "ClusterGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "Properties" : {
+                "LaunchConfigurationName" :  { "Ref" : "LaunchConfig" },
+                "DesiredCapacity" : { "Ref" : "NumberOfInstances"},
+                "MinSize" : "1",
+                "MaxSize" : "15",
+                "VPCZoneIdentifier" : [{ "Ref" : "VPCSubnet" }],
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"}, "PropagateAtLaunch" : "true" } ]
+            }
+        },
         "LaunchConfig" : {
             "Type" : "AWS::AutoScaling::LaunchConfiguration",
             "Metadata" : {
@@ -197,14 +197,14 @@
                                    "echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
                                    "  PUBLICIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)\n",
                                    "  CONF=/etc/aerospike/aerospike.conf\n",
-								   "  REGION=",{ "Ref" : "AWS::Region"},"\n",
+                                   "  REGION=",{ "Ref" : "AWS::Region"},"\n",
                                    "  sed -i \"/port 3000/a \\\t\taccess-address $PUBLICIP virtual\" $CONF\n",
                                    "  ###Point to all instances using the mesh-address config option\n",
-								   "  HOSTNAMES=$(aws ec2 describe-vpc-attribute --vpc-id=",{ "Ref":"VPC"}," --region=$REGION --attribute=enableDnsHostnames --output=text | grep ENABLEDNSHOSTNAMES | awk '{print $2}')\n",
-								   "  if [[ \"$HOSTNAMES\" == \"True\" ]]; then\n",
+                                   "  HOSTNAMES=$(aws ec2 describe-vpc-attribute --vpc-id=",{ "Ref":"VPC"}," --region=$REGION --attribute=enableDnsHostnames --output=text | grep ENABLEDNSHOSTNAMES | awk '{print $2}')\n",
+                                   "  if [[ \"$HOSTNAMES\" == \"True\" ]]; then\n",
                                    "    PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
                                    "  else PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $3}') \n",
-								   "  fi\n",
+                                   "  fi\n",
                                    "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
                                    "  sed -i '/.*mesh-seed-address-port/d' $CONF\n",
                                    "  for i in $PRIVATEIP; do ",
@@ -283,11 +283,11 @@
                                 "MYNODE=$(curl 169.254.169.254/latest/meta-data/instance-id)\n",
                                 "REGION='",{ "Ref" : "AWS::Region"},"'   # CFT\n",
                                 "QUEUE='",{ "Ref" : "MigrationSQS"},"'    # CFT\n",
-								"HOSTNAMES=$(aws ec2 describe-vpc-attribute --vpc-id=",{ "Ref":"VPC"}," --region=$REGION --attribute=enableDnsHostnames --output=text | grep ENABLEDNSHOSTNAMES | awk '{print $2}')\n",
-								"if [[ \"$HOSTNAMES\" == \"True\" ]]; then\n",
+                                "HOSTNAMES=$(aws ec2 describe-vpc-attribute --vpc-id=",{ "Ref":"VPC"}," --region=$REGION --attribute=enableDnsHostnames --output=text | grep ENABLEDNSHOSTNAMES | awk '{print $2}')\n",
+                                "if [[ \"$HOSTNAMES\" == \"True\" ]]; then\n",
                                 "  CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}')\n",
-								"else CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $3}')\n",
-								"fi\n",
+                                "else CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $3}')\n",
+                                "fi\n",
                                 "# Find SQS message with termination message\n",
                                 "FOUND=false\n",
                                 "MESSAGE=$(aws sqs receive-message --region  $REGION --queue-url $QUEUE  --region $REGION  --wait-time-seconds 10 --visibility-timeout 2 )\n",                                "BODY=$(echo $MESSAGE | jq '.Messages[0] .Body')\n",
@@ -411,16 +411,16 @@
                 "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
             }
         },
-		"InstanceSecurityGroupIngress" : {
-			"Type" : "AWS::EC2::SecurityGroupIngress",
-			"Properties" : {
+        "InstanceSecurityGroupIngress" : {
+            "Type" : "AWS::EC2::SecurityGroupIngress",
+            "Properties" : {
                 "GroupId" : { "Fn::GetAtt" : [ "InstanceSecurityGroup", "GroupId"] },
-				"IpProtocol" : "tcp",
-				"FromPort" : "3001",
-				"ToPort" : "3004",
-				"SourceSecurityGroupId" : { "Fn::GetAtt" : ["InstanceSecurityGroup", "GroupId"] }
-				},
+                "IpProtocol" : "tcp",
+                "FromPort" : "3001",
+                "ToPort" : "3004",
+                "SourceSecurityGroupId" : { "Fn::GetAtt" : ["InstanceSecurityGroup", "GroupId"] }
+                },
             "DependsOn" : "InstanceSecurityGroup"
-		}
-	}
+        }
+    }
 }

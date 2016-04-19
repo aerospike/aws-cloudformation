@@ -5,6 +5,11 @@ AWS CloudFormation scripts used for [Amazon's Marketplace](https://aws.amazon.co
 
 Download a copy of this repo using either the Download link or use git clone.
 
+**Note**
+Starting with Aerospike 3.8.1, the Community Edition is configured to transmit anonymous usage statistics. 
+We ask your help in making Aerospike better by leaving this feature enabled. You can learn about our goals,
+how we use the data, and how to disable the feature [here](http://www.aerospike.com/aerospike-telemetry/).
+
 
 ## Usage
 Go to AWS Cloud formation console at https://console.aws.amazon.com/cloudformation/home

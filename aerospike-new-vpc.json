@@ -1,12 +1,12 @@
 {
-	"AWSTemplateFormatVersion" : "2010-09-09",
-	"Description" : "Template to create an Aerospike cluster",
-	"Parameters" : {
-		"KeyPair" : {
-			"Description" : "Name of the KeyPair that would be used to ssh into the instances",
-			"Type" : "AWS::EC2::KeyPair::KeyName",
-			"ConstraintDescription" : "Please specify the name of the keypair that you use to login"
-		},
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "Template to create an Aerospike cluster",
+    "Parameters" : {
+        "KeyPair" : {
+            "Description" : "Name of the KeyPair that would be used to ssh into the instances",
+            "Type" : "AWS::EC2::KeyPair::KeyName",
+            "ConstraintDescription" : "Please specify the name of the keypair that you use to login"
+        },
     "Tenancy" : {
         "Description" : "The tenancy of your instance",
         "Type" : "String",
@@ -60,16 +60,16 @@
 
   "Mappings" : {
     "RegionMap" : {
-        "us-east-1" : {"name": "ami-d62b25bc"},
-        "us-west-2" : {"name": "ami-9b3bd0fb"},
-        "us-west-1" : {"name": "ami-6d1b660d"},
-        "eu-west-1" : {"name": "ami-d39c1ba0"},
-        "eu-central-1" : {"name" : "ami-f32fc99c"},
-        "ap-southeast-1" : {"name": "ami-9bc50ff8"},
-        "ap-southeast-2" : {"name": "ami-9b7350f8"},
-        "ap-northeast-1" : {"name": "ami-03c7d36d"},
-        "ap-northeast-2" : {"name": "ami-58a76e36"},
-        "sa-east-1" : {"name": "ami-0865e964"}
+        "us-east-1" : {"name": "ami-dd4f51b7"},
+        "us-west-2" : {"name": "ami-be08fede"},
+        "us-west-1" : {"name": "ami-1b9ce37b"},
+        "eu-west-1" : {"name": "ami-3fd25e4c"},
+        "eu-central-1" : {"name" : "ami-7ca14213"},
+        "ap-southeast-1" : {"name": "ami-1dc2167e"},
+        "ap-southeast-2" : {"name": "ami-b56b46d6"},
+        "ap-northeast-1" : {"name": "ami-d11b04bf"},
+        "ap-northeast-2" : {"name": "ami-840ec6ea"},
+        "sa-east-1" : {"name": "ami-17b43a7b"}
     }
   },
   
@@ -358,100 +358,100 @@
                 }
             }
         },
-		"VPC" : {
-			"Type" : "AWS::EC2::VPC",
-			"Properties" : {
-				"CidrBlock" : "10.0.0.0/16",
-				"EnableDnsSupport" : "true",
-				"EnableDnsHostnames" : "true",
+        "VPC" : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : "10.0.0.0/16",
+                "EnableDnsSupport" : "true",
+                "EnableDnsHostnames" : "true",
         "InstanceTenancy": { "Ref" : "Tenancy" },
-				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
-			}
-		},
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
 
-		"PublicSubnet" : {
-			"Type" : "AWS::EC2::Subnet",
-			"Properties" : {
-				"VpcId" : { "Ref" : "VPC" },
-				"CidrBlock" : "10.0.0.0/24",
-				"AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : { "Ref" : "AWS::Region" } } ] },
-				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
-			}
-		},
+        "PublicSubnet" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "CidrBlock" : "10.0.0.0/24",
+                "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : { "Ref" : "AWS::Region" } } ] },
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
 
-		"InternetGateway" : {
-			"Type" : "AWS::EC2::InternetGateway",
-			"Properties" : {
-				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
-			}
-		},
+        "InternetGateway" : {
+            "Type" : "AWS::EC2::InternetGateway",
+            "Properties" : {
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
 
-		"GatewayToInternet" : {
-			"Type" : "AWS::EC2::VPCGatewayAttachment",
-			"Properties" : {
-				"VpcId" : { "Ref" : "VPC" },
-				"InternetGatewayId" : { "Ref" : "InternetGateway" }
-			}
-		},
+        "GatewayToInternet" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "InternetGatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
 
-		"PublicRouteTable" : {
-			"Type" : "AWS::EC2::RouteTable",
-			"Properties" : {
-				"VpcId" : { "Ref" : "VPC" },
-				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
-			}
-		},
+        "PublicRouteTable" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
 
-		"PublicRoute" : {
-			"Type" : "AWS::EC2::Route",
-			"DependsOn" : "GatewayToInternet",
-			"Properties" : {
-				"RouteTableId" : { "Ref" : "PublicRouteTable" },
-				"DestinationCidrBlock" : "0.0.0.0/0",
-				"GatewayId" : { "Ref" : "InternetGateway" }
-			}
-		},
+        "PublicRoute" : {
+            "Type" : "AWS::EC2::Route",
+            "DependsOn" : "GatewayToInternet",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "PublicRouteTable" },
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "GatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
 
-		"PublicSubnetRouteTableAssociation" : {
-			"Type" : "AWS::EC2::SubnetRouteTableAssociation",
-			"Properties" : {
-				"SubnetId" : { "Ref" : "PublicSubnet" },
-				"RouteTableId" : { "Ref" : "PublicRouteTable" }
-			}
-		},
+        "PublicSubnetRouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "PublicSubnet" },
+                "RouteTableId" : { "Ref" : "PublicRouteTable" }
+            }
+        },
 
-		"InstanceSecurityGroup" : {
-			"Type" : "AWS::EC2::SecurityGroup",
-			"Properties" : {
-				"GroupDescription" : "Enable ports needed by Aerospike",
-				"VpcId" : { "Ref" : "VPC" },
-				"SecurityGroupIngress" : [ {
-					"IpProtocol" : "tcp",
-					"FromPort" : "3000",
-					"ToPort" : "3000",
-					"CidrIp" : "0.0.0.0/0"
-				},
+        "InstanceSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Enable ports needed by Aerospike",
+                "VpcId" : { "Ref" : "VPC" },
+                "SecurityGroupIngress" : [ {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "3000",
+                    "ToPort" : "3000",
+                    "CidrIp" : "0.0.0.0/0"
+                },
         {
           "IpProtocol" : "tcp",
           "FromPort" : "22",
           "ToPort" : "22",
           "CidrIp" : { "Ref" : "PermitSSH" }
         },
-				{
-					"IpProtocol" : "tcp",
-					"FromPort" : "8081",
-					"ToPort" : "8081",
-					"CidrIp" : "0.0.0.0/0"
-				},
-				{
-					"IpProtocol" : "icmp",
-					"FromPort" : "-1",
-					"ToPort" : "-1",
-					"CidrIp" : "0.0.0.0/0"
-				} ],
-				"Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
-			}
-		},
+                {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "8081",
+                    "ToPort" : "8081",
+                    "CidrIp" : "0.0.0.0/0"
+                },
+                {
+                    "IpProtocol" : "icmp",
+                    "FromPort" : "-1",
+                    "ToPort" : "-1",
+                    "CidrIp" : "0.0.0.0/0"
+                } ],
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
     "InstanceSecurityGroupIngress" : {
         "Type" : "AWS::EC2::SecurityGroupIngress",
         "Properties" : {
@@ -463,5 +463,5 @@
             },
         "DependsOn" : "InstanceSecurityGroup"
     }
-	}
+    }
 }

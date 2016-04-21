@@ -44,7 +44,7 @@ For more info on which instance to use, refer to Aerospike [AWS Capacity Plannin
 
 8. Enter number of instances as required.
 
-9. Enter the CIDR block from which you permit SSH access. You can use many online sites like [whatismyip](http://whatismyip.org/) to find out your IP. For single IP addresses appending /32 is required. Only 1 entry is permitted.
+9. Enter the CIDR block from which you permit SSH access. You can use many online sites like [whatismyip](http://whatismyip.org/) to find out your IP. For single IP addresses appending /32 is required. Only 1 entry is permitted. If you'd like to give access to everyone/anyone, use 0.0.0.0/0
 
 10. Choose if you'd like dedicated tenancy. There will be additional costs with this option.
 

@@ -45,7 +45,7 @@ For more info on which instance to use, refer to Aerospike [AWS Capacity Plannin
   * The simplest method is to upload a file to S3, then making the file public. The direct link is available via the properties tab of the S3 object. 
   * Your custom namespace settings should take advantage of the ephemeral storage at /dev/sdf and your provisioned EBS volume at /dev/sdg.
   * Custom namespace file is everything under the namespace section of aerospike.conf file, including the namespace { } declaration.
-  * See the included custom_namespace.conf file as an example
+  * See the included custom\_namespace.conf file as an example
 
 8. Enter number of instances as required.
 
@@ -91,7 +91,7 @@ Upon instance startup, instances will run a userdata script that will query AWS 
 
 This script will then parse out the private IP addresses and modify the clustering section of aerospike configs with said IPs.
 
-This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster. **Nodes leaving the cluster must be triggered by autoscaling to keep guarantee data consistency**. On scale-in, an SQS message will be sent with information on which node is being terminated. The each node polls SQS for its own message. Once the node finds an SQS message for itself, it first checks for data migrations. If no migrations are occuring, it will stop ASD and continues the autoscaling termination process. If there are data migrations occuring, it will interrupt the scale-in, leaving the instance running and cluster untouched,  and wait for the next poll. **Only 1 node may scale-in at a time to ensure no data loss**
+This cluster is resiliant to any node being added/dropped. Additional nodes added with autoscaling will be able to automatically join the cluster. **Nodes leaving the cluster must be triggered by autoscaling to guarantee data consistency**. On scale-in, an SQS message will be sent with information on which node is being terminated. Each node polls SQS for its own message. Once the node finds an SQS message for itself, it first checks for data migrations. If no migrations are occuring, it will stop ASD and continues the autoscaling termination process. If there are data migrations occuring, it will interrupt the scale-in, leaving the instance running and cluster untouched,  and wait for the next poll. **Only 1 node may scale-in at a time to ensure no data loss**. (Technically it's replication factor - 1)
 
 By default ping, Aerospike port 3000 and AMC port 8081 are open globally (0.0.0.0/0). You may want to lock this down to just your own IP range.
 

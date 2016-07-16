@@ -66,21 +66,20 @@
         }
     },
 
-    "Mappings" : {
-        "RegionMap" : {
-            "us-east-1" : {"name": "ami-ecb14881"},
-            "us-west-1" : {"name": "ami-f4b6cc94"},
-            "us-west-2" : {"name": "ami-69f40f09"},
-            "eu-west-1" : {"name": "ami-d3d14ca0"},
-            "eu-central-1" : {"name" : "ami-1134da7e"},
-            "ap-southeast-1" : {"name": "ami-aa1ecec9"},
-            "ap-southeast-2" : {"name": "ami-ed97b98e"},
-            "ap-northeast-1" : {"name": "ami-e3a34a82"},
-            "ap-northeast-2" : {"name": "ami-28e52e46"},
-            "sa-east-1" : {"name": "ami-f475fe98"}
+    "Mappings": {
+        "RegionMap": {
+            "us-east-1": {"name": "ami-4ab87a27"}.
+            "us-west-1": {"name": "ami-f55f1b95"},
+            "us-west-2": {"name": "ami-868245e6"},
+            "eu-west-1": {"name": "ami-8ff26afc"},
+            "eu-central-1": {"name": "ami-a23ed6cd"},
+            "ap-southeast-1": {"name": "ami-6a8e5c09"},
+            "ap-southeast-2": {"name": "ami-6d00280e"},
+            "ap-northeast-1": {"name": "ami-4d96612c"},
+            "ap-northeast-2": {"name": "ami-155a917b"},
+            "sa-east-1": {"name": "ami-9ece5bf2"}
         }
     },
-
     "Conditions" : {
         "NotUsingEBS" : { "Fn::Equals" : [ { "Ref" : "EBS" }, 0  ] }
     },

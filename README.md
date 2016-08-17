@@ -41,7 +41,7 @@ For more info on which instance to use, refer to Aerospike [AWS Capacity Plannin
 
 6. Choose a valid existing keypair. If you don't have a keypair in AWS already, [create one first](http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-create-key-pair.html) 
 
-7. *(Optional, but suggested)* Enter the URL where CloudFormation can download your customized namespace settings. This will be appended to the end of the aerospike.conf file as-is. 
+7. *(Optional, but suggested)* Enter the URL where CloudFormation can download your customized namespace settings. This will be appended to the end of the aerospike.conf file as-is. If this option is defined, the default namespaces will be removed.
   * The simplest method is to upload a file to S3, then making the file public. The direct link is available via the properties tab of the S3 object. 
   * Your custom namespace settings should take advantage of the ephemeral storage at /dev/sdf and your provisioned EBS volume at /dev/sdg.
   * Custom namespace file is everything under the namespace section of aerospike.conf file, including the namespace { } declaration.

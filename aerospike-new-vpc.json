@@ -57,22 +57,20 @@
             "Type" : "String"
         }
     },
-  
     "Mappings": {
         "RegionMap": {
-            "us-east-1" : {"name": "ami-0e0f9519"},
-            "us-west-1" : {"name": "ami-cb1e5cab"},
-            "us-west-2" : {"name": "ami-0761ab67"},
-            "eu-west-1" : {"name": "ami-01e39672"},
-            "eu-central-1" : {"name" : "ami-329c6d5d"},
-            "ap-southeast-1" : {"name": "ami-2c19c04f"},
-            "ap-southeast-2" : {"name": "ami-8a6156e9"},
-            "ap-northeast-1" : {"name": "ami-098e4368"},
-            "ap-northeast-2" : {"name": "ami-d662a8b8"},
-            "sa-east-1" : {"name": "ami-4161f72d"}
+          "us-east-1" : {"name": "ami-4f286058"},
+            "us-west-1" : {"name": "ami-69e5ac09"},
+            "us-west-2" : {"name": "ami-4adb002a"},
+            "eu-west-1" : {"name": "ami-57fdbe24"},
+            "eu-central-1" : {"name" : "ami-59986636"},
+            "ap-southeast-1" : {"name": "ami-656dca06"},
+            "ap-southeast-2" : {"name": "ami-155e6c76"},
+            "ap-northeast-1" : {"name": "ami-b634efd7"},
+            "ap-northeast-2" : {"name": "ami-b5a074db"},
+            "sa-east-1" : {"name": "ami-d8dc41b4"}
         }
     },
-
     "Conditions" : {
         "NotUsingEBS" : { "Fn::Equals" : [ { "Ref" : "EBS" }, 0  ] }
     },

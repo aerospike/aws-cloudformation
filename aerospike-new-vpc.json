@@ -59,7 +59,7 @@
     },
     "Mappings": {
         "RegionMap": {
-          "us-east-1" : {"name": "ami-d33667c4"},
+          "us-east-1" : {"name": "ami-f8e9b4ef"},
             "us-west-1" : {"name": "ami-e2cd8582"},
             "us-west-2" : {"name": "ami-f7b81d97"},
             "eu-west-1" : {"name": "ami-9e3b74ed"},

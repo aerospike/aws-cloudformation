@@ -167,7 +167,8 @@
                 "MaxSize" : "15",
                 "AvailabilityZones" : [ { "Fn::Select" : [ "0", { "Fn::GetAZs" : { "Ref" : "AWS::Region" } } ] } ],
                 "VPCZoneIdentifier" : [{ "Ref" : "PublicSubnet" }],
-                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"}, "PropagateAtLaunch" : "true" } ]
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"}, "PropagateAtLaunch" : "true" }, 
+                           {"Key" : "Name" , "Value" : { "Ref" : "AWS::StackName"}, "PropagateAtLaunch" : "true" } ]
             }
         },
         "LaunchConfig" : {
@@ -453,6 +454,12 @@
                 "SourceSecurityGroupId" : { "Fn::GetAtt" : ["InstanceSecurityGroup", "GroupId"] }
             },
             "DependsOn" : "InstanceSecurityGroup"
+        }
+    },
+    "Outputs" : {
+        "AutoscalingID" : {
+            "Description" : "The Autoscaling Group ID that is used to deploy your cluster",
+            "Value" :  { "Ref" : "ClusterGroup" }
         }
     }
 }

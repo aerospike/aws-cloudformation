@@ -69,46 +69,46 @@
     "Mappings": {
         "RegionMap": {
             "us-east-1": {
-              "name": "ami-c4a60dd2"
+                "name": "ami-d7a4e3c1"
             },
             "us-east-2": {
-              "name": "ami-965a7ef3"
+                "name": "ami-3f9cbb5a"
             },
             "us-west-1": {
-              "name": "ami-b17f27d1"
+                "name": "ami-04755564"
             },
             "us-west-2": {
-              "name": "ami-b91099d9"
+                "name": "ami-6fe5840f"
             },
             "ca-central-1": {
-              "name": "ami-c540fda1"
+                "name": "ami-ba59e5de"
             },
             "eu-west-1": {
-              "name": "ami-45f0c623"
+                "name": "ami-4a06132c"
             },
             "eu-west-2": {
-              "name": "ami-1ab8ad7e"
+                "name": "ami-f3190e97"
             },
             "eu-central-1": {
-              "name": "ami-919345fe"
+                "name": "ami-a004dccf"
             },
             "ap-southeast-1": {
-              "name": "ami-eb51e388"
+                "name": "ami-2639be45"
             },
             "ap-southeast-2": {
-              "name": "ami-9cf9f4ff"
+                "name": "ami-66a5b005"
             },
             "ap-south-1": {
-              "name": "ami-6ffc8c00"
+                "name": "ami-8cdca1e3"
             },
             "ap-northeast-1": {
-              "name": "ami-c77b27a0"
+                "name": "ami-5c142f3b"
             },
             "ap-northeast-2": {
-              "name": "ami-acc615c2"
+                "name": "ami-e169b48f"
             },
             "sa-east-1": {
-              "name": "ami-c8dfbea4"
+                "name": "ami-1e533d72"
             }
         }
     },

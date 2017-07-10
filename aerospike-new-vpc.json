@@ -61,46 +61,46 @@
     "Mappings": {
         "RegionMap": {
             "us-east-1": {
-                "name": "ami-3182de27"
+                "name": "ami-83c8f195"
             },
             "us-east-2": {
-                "name": "ami-19ffd97c"
+                "name": "ami-ab0a2bce"
             },
             "us-west-1": {
-                "name": "ami-f84c6e98"
+                "name": "ami-66446b06"
             },
             "us-west-2": {
-                "name": "ami-aedfd1d7"
+                "name": "ami-6c160615"
             },
             "ca-central-1": {
-                "name": "ami-8e0eb2ea"
+                "name": "ami-b18738d5"
             },
             "eu-west-1": {
-                "name": "ami-62b8aa04"
+                "name": "ami-01b65078"
             },
             "eu-west-2": {
-                "name": "ami-e4809780"
+                "name": "ami-26d0c642"
             },
             "eu-central-1": {
-                "name": "ami-f377d29c"
+                "name": "ami-ed19b882"
             },
             "ap-southeast-1": {
-                "name": "ami-25e26146"
+                "name": "ami-f6ef6495"
             },
             "ap-southeast-2": {
-                "name": "ami-0b3b2d68"
+                "name": "ami-174d5f74"
             },
             "ap-south-1": {
-                "name": "ami-c52f50aa"
+                "name": "ami-11fc827e"
             },
             "ap-northeast-1": {
-                "name": "ami-66f5f801"
+                "name": "ami-4e150829"
             },
             "ap-northeast-2": {
-                "name": "ami-d85884b6"
+                "name": "ami-d068b7be"
             },
             "sa-east-1": {
-                "name": "ami-9f670ff3"
+                "name": "ami-35d9b359"
             }
         }
     },
@@ -301,9 +301,11 @@
                                 "CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}')\n",
                                 "# Find SQS message with termination message\n",
                                 "FOUND=false\n",
-                                "MESSAGE=$(aws sqs receive-message --region  $REGION --queue-url $QUEUE  --region $REGION  --wait-time-seconds 10 --visibility-timeout 2 )\n",                                "BODY=$(echo $MESSAGE | jq '.Messages[0] .Body')\n",
+                                "MESSAGE=$(aws sqs receive-message --region  $REGION --queue-url $QUEUE --wait-time-seconds 10 --visibility-timeout 2 )\n",
+                                "BODY=$(echo $MESSAGE | jq '.Messages[0] .Body')\n",
                                 "RECEIPT=$(echo $MESSAGE | jq --raw-output '.Messages[0] .ReceiptHandle')\n",
-                                "LIFECYCLE=$(eval echo $BODY | jq --raw-output '.LifecycleTransition')\n",                                "INSTANCE=$(eval echo $BODY | jq --raw-output '.EC2InstanceId')\n",
+                                "LIFECYCLE=$(eval echo $BODY | jq --raw-output '.LifecycleTransition')\n",
+                                "INSTANCE=$(eval echo $BODY | jq --raw-output '.EC2InstanceId')\n",
                                 "if [[ \"$LIFECYCLE\" == \"autoscaling:EC2_INSTANCE_TERMINATING\" ]] && [[ \"$INSTANCE\" == \"$MYNODE\" ]]; then\n",
                                 "    TOKEN=$(eval echo $BODY | jq --raw-output '.LifecycleActionToken')\n",
                                 "    HOOK=$(eval echo $BODY | jq --raw-output '.LifecycleHookName')\n",

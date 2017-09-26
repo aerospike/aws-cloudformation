@@ -107,17 +107,17 @@ Owner: 262212597706
 
 | Region         | AMI          |
 |----------------|--------------|
-| us-east-1      | ami-cf8574b5 |
-| us-east-2		 | ami-27456842 |
-| us-west-1      | ami-b290a1d2 |
-| us-west-2      | ami-126c926a |
-| ca-central-1	 | ami-af73cacb |
-| eu-central-1   | ami-c243f3ad |
-| eu-west-1      | ami-9ec008e7 |
-| eu-west-2		 | ami-9db9aaf9 |
-| ap-northeast-1 | ami-52579d34 |
-| ap-northeast-2 | ami-48ae7426 |
-| ap-south-1	 | ami-bc2f6ed3 |
-| ap-southeast-1 | ami-9c6b18ff |
-| ap-southeast-2 | ami-3609e854 |
-| sa-east-1      | ami-b64f33da |
+| us-east-1      | ami-6cf30216 |
+| us-east-2		 | ami-e74b6682 |
+| us-west-1      | ami-f092a390 |
+| us-west-2      | ami-f0669888 |
+| ca-central-1	 | ami-3e75cc5a |
+| eu-central-1   | ami-d24afabd |
+| eu-west-1      | ami-ced911b7 |
+| eu-west-2		 | ami-abbba8cf |
+| ap-northeast-1 | ami-1166ac77 |
+| ap-northeast-2 | ami-51ad773f |
+| ap-south-1	 | ami-632e6f0c |
+| ap-southeast-1 | ami-2d6c1f4e |
+| ap-southeast-2 | ami-410aeb23 |
+| sa-east-1      | ami-1d4e3271 |

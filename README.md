@@ -20,7 +20,9 @@ Change the region as per your requirement.
 
 1. Choose "Create New Stack".
 
-2. Upload the aerospike-cf.json found in this repo.
+2. Upload one of the aerospike-\*-vpc.json template found in this repo.
+  * aerospike-new-vpc.json is for creating a new VPC. This is the all-in-one self contained template.
+  * aerospike-existing-json is for utilizing and deploying into an existing VPC. This is quicker due to not having to deploy a VPC.
 
 3. Click Next
 
@@ -105,13 +107,17 @@ Owner: 262212597706
 
 | Region         | AMI          |
 |----------------|--------------|
-| us-east-1      | ami-34b6ed5e |
-| us-west-1      | ami-c5ed98a5 |
-| us-west-2      | ami-01637960 |
-| eu-central-1   | ami-06e4fa6a |
-| eu-west-1      | ami-cf268ebc |
-| ap-northeast-1 | ami-ed152883 |
-| ap-northeast-2 | ami-5dce0033 |
-| ap-southeast-1 | ami-41844822 |
-| ap-southeast-2 | ami-d75673b4 |
-| sa-east-1      | ami-14840578 |
+| us-east-1      | ami-cf8574b5 |
+| us-east-2		 | ami-27456842 |
+| us-west-1      | ami-b290a1d2 |
+| us-west-2      | ami-126c926a |
+| ca-central-1	 | ami-af73cacb |
+| eu-central-1   | ami-c243f3ad |
+| eu-west-1      | ami-9ec008e7 |
+| eu-west-2		 | ami-9db9aaf9 |
+| ap-northeast-1 | ami-52579d34 |
+| ap-northeast-2 | ami-48ae7426 |
+| ap-south-1	 | ami-bc2f6ed3 |
+| ap-southeast-1 | ami-9c6b18ff |
+| ap-southeast-2 | ami-3609e854 |
+| sa-east-1      | ami-b64f33da |

@@ -75,49 +75,49 @@
     "Mappings": {
         "RegionMap": {
             "us-east-1": {
-                "name": "ami-651de418"
+                "name": "ami-0895d4c9d4bfdf18c"
             },
             "us-east-2": {
-                "name": "ami-1b5f697e"
+                "name": "ami-0bcf02858b1d7b1c8"
             },
             "us-west-1": {
-                "name": "ami-a37b6ec3"
+                "name": "ami-04e7e941819d5b42e"
             },
             "us-west-2": {
-                "name": "ami-10e97e68"
+                "name": "ami-0215478c6825946ef"
             },
             "ca-central-1": {
-                "name": "ami-2f5cdb4b"
+                "name": "ami-0fc779f68c06da678"
             },
             "eu-west-1": {
-                "name": "ami-c6e1a3bf"
+                "name": "ami-044eab4bf7d36d03f"
             },
             "eu-west-2": {
-                "name": "ami-07ca2d60"
+                "name": "ami-08fe2d186cf1d08bd"
             },
             "eu-west-3": {
-                "name": "ami-b653e5cb"
+                "name": "ami-02abd0a6ee61ffba6"
             },
             "eu-central-1": {
-                "name": "ami-6ce88603"
+                "name": "ami-0a1b535c47aaff563"
             },
             "ap-southeast-1": {
-                "name": "ami-c32176bf"
+                "name": "ami-0fe59bd476d9008e7"
             },
             "ap-southeast-2": {
-                "name": "ami-60c40402"
+                "name": "ami-006b2cde509ab4366"
             },
             "ap-south-1": {
-                "name": "ami-75da841a"
+                "name": "ami-0629ad978b645ffb0"
             },
             "ap-northeast-1": {
-                "name": "ami-644a0502"
+                "name": "ami-0f1725c179df38b12"
             },
             "ap-northeast-2": {
-                "name": "ami-bbeb47d5"
+                "name": "ami-0a293d9795a62ef08"
             },
             "sa-east-1": {
-                "name": "ami-a06923cc"
+                "name": "ami-051e8e91e5ee25f53"
             }
         }
     },

@@ -6,6 +6,6 @@ locals {
     source_ami_owners = ["099720109477"]
     # AMI name for OS architecture
     ami_names = {
-        focal_arm64  = "ubuntu/20.04/arm64/${local.timestamp}"
+        focal_amd64  = "ubuntu/20.04/arm64/${local.timestamp}"
     }
 }

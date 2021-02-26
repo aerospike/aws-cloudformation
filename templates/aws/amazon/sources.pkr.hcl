@@ -1,11 +1,11 @@
 # source blocks configures builder plugins; it is used inside
 # build blocks to create resources. A build block runs provisioners and
 # post-processors on an instance created by the source.
-source "amazon-ebs" "focal-arm64" {
+source "amazon-ebs" "amzn2-amd64" {
 
   source_ami_filter {
     filters = {
-      name                = "ubuntu/images/hvm-ssd/*ubuntu-focal-20.04-amd64-server-*"
+      name                = "amzn2-ami-hvm*"
       root-device-type    = "ebs"
       virtualization-type = "hvm"
     }
@@ -14,7 +14,7 @@ source "amazon-ebs" "focal-arm64" {
   }
 
   ami_name                    = "${var.ami_name}-${local.timestamp}"
-  ami_description             = "Aerospike 5.5.0.3 AMI"
+  ami_description             = "Aerospike 5.5.0.3 AMI for Amazon linux 2"
   instance_type               = var.instance_type_amd64
   region                      = var.region
   ssh_username                = var.username
@@ -23,10 +23,10 @@ source "amazon-ebs" "focal-arm64" {
   communicator                = "ssh"
 
   tags = {
-    Name              = local.ami_names.focal_amd64
-    OS_Version        = "20.04"
+    Name              = local.ami_names.amzn2_amd64
+    OS_Version        = "2"
     OS_Arch           = "x86_64"
-    OS_Name           = "Ubuntu"
+    OS_Name           = "Amazon linux"
     Runner            = "EC2"
     Aerospike_Version = "5.5.0.3"
   }

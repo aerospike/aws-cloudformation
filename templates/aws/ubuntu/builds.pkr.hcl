@@ -6,6 +6,6 @@ build {
   ]
   
   provisioner "shell" {
-    script = "provisioners/aerospike-ubuntu-install.sh"
+    script = "provisioners/aerospike_ubuntu_install.sh"
   }
 }

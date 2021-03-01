@@ -1,0 +1,12 @@
+
+# Cache objects
+packer_cache/
+
+# Crash log
+crash.log
+
+# custome log file for aerospike
+packer.log
+
+# For built boxes
+*.box

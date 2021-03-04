@@ -1,0 +1,510 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Description" : "Template to create an Aerospike cluster",
+    "Parameters" : {
+        "KeyPair" : {
+            "Description" : "Name of the KeyPair that would be used to ssh into the instances",
+            "Type" : "AWS::EC2::KeyPair::KeyName",
+            "ConstraintDescription" : "Please specify the name of the keypair that you use to login"
+        },
+        "Tenancy" : {
+            "Description" : "The tenancy of your instance",
+            "Type" : "String",
+            "Default" : "default",
+            "AllowedValues" : [ "default", "dedicated"]
+        },
+        "NumberOfInstances" : {
+            "Description" : "Number of instances in the cluster",
+            "Type" : "Number",
+            "Default" : "4",
+            "MinValue" : "1",
+            "MaxValue" : "15"
+        },
+        "Cloudwatch" : {
+            "Description" : "Add basic Aerospike metrics to Cloudwatch. Will incur Cloudwatch expenses ~ $24/mo/instance",
+            "Type" : "String",
+            "Default" : "no",
+            "AllowedValues": [ "yes" , "no" ]
+        },
+        "PermitSSH" : {
+            "Description" : "CIDR block that's permitted to SSH to the Aerospike Cluster",
+            "Type" : "String",
+            "AllowedPattern" : "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription" : "Must be in CIDR notation. To specify one specifc IPv4 address, append /32. eg: 192.168.1.100/32"
+        },
+        "InstanceType" : {
+            "Description" : "Type of EC2 instance to launch.",
+            "Type" : "String",
+            "Default" : "t2.large",
+            "AllowedValues" : [ "t2.micro", "t2.small", "t2.medium", "t2.large","t2.xlarge","t2.2xlarge",
+                                "t3.micro", "t3.small", "t3.medium", "t3.large","t3.xlarge","t3.2xlarge",
+                                "m3.medium", "m3.large", "m3.xlarge", "m3.2xlarge", 
+                                "m4.large", "m4.xlarge", "m4.2xlarge", "m4.4xlarge", "m4.10xlarge","m4.16xlarge",
+                                "m5.large", "m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.12xlarge","m5.24xlarge",
+                                "c3.large", "c3.xlarge", "c3.2xlarge", "c3.4xlarge", "c3.8xlarge",
+                                "c4.large", "c4.xlarge", "c4.2xlarge", "c4.4xlarge", "c4.8xlarge",
+                                "c5.large", "c5.xlarge", "c5.2xlarge", "c5.4xlarge", "c5.9xlarge","c5.18xlarge",
+                                "r3.large", "r3.xlarge", "r3.2xlarge", "r3.4xlarge", "r3.8xlarge",
+                                "r4.large", "r4.xlarge", "r4.2xlarge", "r4.4xlarge", "r4.8xlarge","r4.16xlarge",
+                                "r5.large", "r5.xlarge", "r5.2xlarge", "r5.4xlarge", "r5.12xlarge","r5.24xlarge",
+                                "r5d.large", "r5d.xlarge", "r5d.2xlarge", "r5d.4xlarge", "r5d.12xlarge","r5d.24xlarge",
+                                "i2.xlarge", "i2.2xlarge", "i2.4xlarge", "i2.8xlarge",
+                                "i3.large", "i3.xlarge", "i3.2xlarge", "i3.4xlarge", "i3.8xlarge", "i3.16xlarge"
+                                ]
+        },
+        "EBS" : {
+            "Description" : "Size of EBS SSD volume in GB. The volume will attach under /dev/sdg. Limit of 16000. Enter 0 to not use EBS.",
+            "Type" : "Number",
+            "Default" : "50",
+            "MinValue" : "0",
+            "MaxValue" : "16000"
+        },
+        "NamespaceFile" : {
+            "Description" : "(Optional) Location of your namespace definition. Must be publically downloadable. Will append file directly to end of aerospike.conf",
+            "Type" : "String"
+        }
+    },
+    "Mappings": {
+        "RegionMap": {
+            "us-east-1": {
+                "name": "ami-0895d4c9d4bfdf18c"
+            },
+            "us-east-2": {
+                "name": "ami-0bcf02858b1d7b1c8"
+            },
+            "us-west-1": {
+                "name": "ami-04e7e941819d5b42e"
+            },
+            "us-west-2": {
+                "name": "ami-0215478c6825946ef"
+            },
+            "ca-central-1": {
+                "name": "ami-0fc779f68c06da678"
+            },
+            "eu-west-1": {
+                "name": "ami-044eab4bf7d36d03f"
+            },
+            "eu-west-2": {
+                "name": "ami-08fe2d186cf1d08bd"
+            },
+            "eu-west-3": {
+                "name": "ami-02abd0a6ee61ffba6"
+            },
+            "eu-central-1": {
+                "name": "ami-0a1b535c47aaff563"
+            },
+            "ap-southeast-1": {
+                "name": "ami-0fe59bd476d9008e7"
+            },
+            "ap-southeast-2": {
+                "name": "ami-006b2cde509ab4366"
+            },
+            "ap-south-1": {
+                "name": "ami-0629ad978b645ffb0"
+            },
+            "ap-northeast-1": {
+                "name": "ami-0f1725c179df38b12"
+            },
+            "ap-northeast-2": {
+                "name": "ami-0a293d9795a62ef08"
+            },
+            "sa-east-1": {
+                "name": "ami-051e8e91e5ee25f53"
+            }
+        }
+    },
+    "Conditions" : {
+        "NotUsingEBS" : { "Fn::Equals" : [ { "Ref" : "EBS" }, 0  ] }
+    },
+  
+    "Resources" : {
+        "ClusterRole" : {
+            "Type": "AWS::IAM::Role",
+               "Properties": {
+                  "AssumeRolePolicyDocument": {
+                     "Version" : "2012-10-17",
+                     "Statement": [ {
+                        "Effect": "Allow",
+                        "Principal": {
+                           "Service": [ "ec2.amazonaws.com","autoscaling.amazonaws.com" ]
+                        },
+                        "Action": [ "sts:AssumeRole" ]
+                     } ]
+                  },
+                  "Path": "/",
+                  "Policies": [ {
+                     "PolicyName": "AerospikeClusterPolicy",
+                     "PolicyDocument": {
+                        "Version" : "2012-10-17",
+                        "Statement": [ {
+                           "Effect": "Allow",
+                           "Action": "ec2:DescribeInstances",
+                           "Resource": "*"
+                        } ]
+                     }
+                  },{
+                      "PolicyName": "AerospikeCloudWatchPolicy",
+                      "PolicyDocument" :{
+                          "Version" : "2012-10-17",
+                          "Statement": [ {
+                              "Effect": "Allow",
+                              "Action": "cloudwatch:PutMetricData",
+                              "Resource": "*"
+                          } ]
+                      }
+                  },{
+                      "PolicyName": "AerospikeSQSPolicy",
+                      "PolicyDocument" :{
+                          "Version" : "2012-10-17",
+                          "Statement": [ {
+                              "Effect": "Allow",
+                              "Action": "sqs:*",
+                              "Resource": { "Fn::GetAtt" : ["MigrationSQS", "Arn"]}
+                          } ]
+                      }
+                  },{
+                      "PolicyName": "AerospikeAutoScalingPolicy",
+                      "PolicyDocument" :{
+                          "Version" : "2012-10-17",
+                          "Statement" : [ {
+                              "Effect": "Allow",
+                              "Action": "autoscaling:*",
+                              "Resource": "*"
+                          } ]
+                      }
+                  }]
+            }
+        },
+        "ClusterInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [ {
+                    "Ref": "ClusterRole"
+                } ]
+            }
+        },
+        "MigrationSQS" : {
+            "Type": "AWS::SQS::Queue",
+            "Properties": {
+                "ReceiveMessageWaitTimeSeconds": 10
+            }
+        },
+        "MigrationHook": {
+            "Type": "AWS::AutoScaling::LifecycleHook",
+            "DependsOn" : "MigrationSQS",
+            "Properties": {
+                "AutoScalingGroupName": { "Ref": "ClusterGroup" },
+                "LifecycleTransition": "autoscaling:EC2_INSTANCE_TERMINATING",
+                "NotificationTargetARN": { "Fn::GetAtt": [ "MigrationSQS", "Arn" ] },
+                "RoleARN": { "Fn::GetAtt": [ "ClusterRole", "Arn" ] }
+            }
+        },
+        "ClusterGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "Properties" : {
+                "LaunchConfigurationName" :  { "Ref" : "LaunchConfig" },
+                "DesiredCapacity" : { "Ref" : "NumberOfInstances"},
+                "MinSize" : "1",
+                "MaxSize" : "15",
+                "AvailabilityZones" : [ { "Fn::Select" : [ "0", { "Fn::GetAZs" : { "Ref" : "AWS::Region" } } ] } ],
+                "VPCZoneIdentifier" : [{ "Ref" : "PublicSubnet" }],
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"}, "PropagateAtLaunch" : "true" }, 
+                           {"Key" : "Name" , "Value" : { "Ref" : "AWS::StackName"}, "PropagateAtLaunch" : "true" } ]
+            }
+        },
+        "LaunchConfig" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata" : {
+                "AWS::CloudFormation::Init" : {
+                    "config" : {
+                        "files" : {
+                            "/tmp/aerospike_cluster" : {
+                                "content" : {  "Fn::Join" : ["", [
+                                   "#!/bin/bash\n",
+                                   "echo ClusterInstancesScriptStart > /var/log/awsuserdatascript\n",
+                                   "  PUBLICIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)\n",
+                                   "  CONF=/etc/aerospike/aerospike.conf\n",
+                                   "  sed -i \"/port 3000/a \\\t\taccess-address $PUBLICIP virtual\" $CONF\n",
+                                   "  ###Point to all instances using the mesh-address config option\n",
+                                   "  sleep 60 # wait for AWS to provision \n",
+                                   "  PRIVATEIP=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=", { "Ref" : "AWS::StackId" }," --output=text --region=",{ "Ref" : "AWS::Region" }," | grep PRIVATEIPADDRESSES | awk '{print $4}') \n",
+                                   "  echo $PRIVATEIP >> /var/log/awsuserdatascript\n",
+                                   "  sed -i '/.*mesh-seed-address-port/d' $CONF\n",
+                                   "  for i in $PRIVATEIP; do ",
+                                   "    sed -i \"/interval/i \\\t\tmesh-seed-address-port $i 3002\" $CONF; done\n",
+                                   "  CODE=$(curl -Is ",{ "Ref" :"NamespaceFile" }," | head -n 1 | cut -d$' ' -f2)\n",
+                                   "  if [ \"$CODE\" != \"200\" ]; then echo 'Namespace File not found' >> /var/log/awsuserdatascript\n",
+                                   "  else sed -i '/namespace test/,$d' $CONF\n", 
+                                   "    curl -s ",{ "Ref" :"NamespaceFile" }," >> $CONF; fi\n",
+                                   "  /etc/init.d/aerospike start\n",
+                                   "  /etc/init.d/amc start\n",
+                                   "echo OtherInstancesScriptFinish >> /var/log/awsuserdatascript\n",
+                                   "(crontab -l 2>/dev/null; echo '*/5 * * * * /opt/aerospike/poll_sqs') | crontab -\n",
+                                   "  if [[ \"",{ "Ref" : "Cloudwatch" },"\" == \"yes\" ]]; then\n",
+                                   "    (crontab -l 2>/dev/null; echo '*/5 * * * * /opt/aerospike/cloudwatch') | crontab -; fi\n"
+                                 ] ] },
+                                "mode" : "000744",
+                                "owner" : "root",
+                                "group" : "root"
+                            },
+                             "/opt/aerospike/cloudwatch" : {
+                                "content" : {  "Fn::Join" : ["", [
+                                   "#!/bin/bash\n",
+                                   "METRICS=$(asinfo -v stats -l)\n",
+                                   "NAMESPACE=aerospike\n",
+                                   "REGION=",{ "Ref" : "AWS::Region" },"\n",
+                                   "INSTANCE=$(curl 169.254.169.254/latest/meta-data/instance-id)\n",
+                                   "CLUSTER=",{ "Ref" : "AWS::StackId" },"\n",
+                                   "for L in $METRICS; do\n",
+                                   "    LINE=(${L//=/ })\n",
+                                   "    case ${LINE[0]} in\n",
+                                   "    cluster_integrity)\n",
+                                   "        if [[ ${LINE[1]} != \"true\" ]]; then\n",
+                                   "            INTEGRITY_ERROR=1\n",
+                                   "        else\n",
+                                   "            INTEGRITY_ERROR=0\n",
+                                   "        fi\n",
+                                   "        ;;\n",
+                                   "    total-bytes-memory)\n",
+                                   "        TBM=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    used-bytes-memory)\n",
+                                   "        UBM=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    total-bytes-disk)\n",
+                                   "        TBD=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    used-bytes-disk)\n",
+                                   "        UBD=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    objects)\n",
+                                   "        OBJECTS=${LINE[1]}\n",
+                                   "        ;;\n",
+                                   "    *)\n",
+                                   "        continue\n",
+                                   "        ;;\n",
+                                   "    esac\n",
+                                   "done\n",
+                                   "FM=$(expr $TBM - $UBM)\n",
+                                   "FD=$(expr $TBD - $UBD)\n",
+                                   "# Submit metrics\n",
+                                   "aws cloudwatch --region $REGION put-metric-data --dimensions Cluster=$CLUSTER,Instance=$INSTANCE --namespace $NAMESPACE --value $INTEGRITY_ERROR --metric-name 'Cluster Integrity'\n",
+                                   "aws cloudwatch --region $REGION put-metric-data --dimensions Cluster=$CLUSTER,Instance=$INSTANCE --namespace $NAMESPACE --value $FM --metric-name 'Free Memory' --unit 'Bytes'\n",
+                                   "aws cloudwatch --region $REGION put-metric-data --dimensions Cluster=$CLUSTER,Instance=$INSTANCE --namespace $NAMESPACE --value $FD --metric-name 'Free Disk' --unit 'Bytes'\n",
+                                   "aws cloudwatch --region $REGION put-metric-data --dimensions Cluster=$CLUSTER,Instance=$INSTANCE --namespace $NAMESPACE --value $OBJECTS --metric-name 'Number of Objects' --unit 'Count'\n"
+                                 ] ] },
+                                "mode" : "000744",
+                                "owner" : "root",
+                                "group" : "root"
+                            },
+                           "/opt/aerospike/poll_sqs" : {
+                                "content" : { "Fn::Join" : [ "" , [
+                                "#!/bin/bash\n",
+                                "# This script will prevent autoscaling from terminating\n",
+                                "# this instance until ASD migrations are completed\n",
+                                "set -e\n",
+                                "MYIP=$(curl 169.254.169.254/latest/meta-data/local-ipv4)\n",
+                                "MYNODE=$(curl 169.254.169.254/latest/meta-data/instance-id)\n",
+                                "REGION='",{ "Ref" : "AWS::Region"},"'   # CFT\n",
+                                "QUEUE='",{ "Ref" : "MigrationSQS"},"'    # CFT\n",
+                                "CLUSTER=$(aws ec2 describe-instances --filter Name=tag-key,Values=StackID Name=tag-value,Values=",{ "Ref":"AWS::StackId"}," --output=text --region=$REGION | grep PRIVATEIPADDRESSES | awk '{print $4}')\n",
+                                "# Find SQS message with termination message\n",
+                                "FOUND=false\n",
+                                "MESSAGE=$(aws sqs receive-message --region  $REGION --queue-url $QUEUE --wait-time-seconds 10 --visibility-timeout 2 )\n",
+                                "BODY=$(echo $MESSAGE | jq '.Messages[0] .Body')\n",
+                                "RECEIPT=$(echo $MESSAGE | jq --raw-output '.Messages[0] .ReceiptHandle')\n",
+                                "LIFECYCLE=$(eval echo $BODY | jq --raw-output '.LifecycleTransition')\n",
+                                "INSTANCE=$(eval echo $BODY | jq --raw-output '.EC2InstanceId')\n",
+                                "if [[ \"$LIFECYCLE\" == \"autoscaling:EC2_INSTANCE_TERMINATING\" ]] && [[ \"$INSTANCE\" == \"$MYNODE\" ]]; then\n",
+                                "    TOKEN=$(eval echo $BODY | jq --raw-output '.LifecycleActionToken')\n",
+                                "    HOOK=$(eval echo $BODY | jq --raw-output '.LifecycleHookName')\n",
+                                "    ASG=$(eval echo $BODY | jq --raw-output '.AutoScalingGroupName')\n",
+                                "    FOUND=true\n",
+                                "    aws sqs delete-message --region $REGION --queue-url $QUEUE --receipt-handle  $RECEIPT\n",
+                                "fi\n",
+                                "# If not not found, exit\n",
+                                "if [[ $FOUND == false ]]; then\n",
+                                "    exit 0\n",
+                                "fi\n",
+                                "# stop aerospike\n",
+                                "/etc/init.d/aerospike stop\n",
+                                "# give time for cluster to react\n",
+                                "sleep 10\n",
+                                "# Find first node that's not myself\n",
+                                "for I in $CLUSTER; do\n",
+                                "    if [[ $I == $MYIP ]]; then\n",
+                                "        continue;\n",
+                                "    fi\n",
+                                "    NODE=$I\n",
+                                "    break\n",
+                                "done\n",
+                                "# Grab migration info\n",
+                                "MIGRATIONS=$(asadm -h $NODE -e 'show statistics namespace' | grep migrate-[rt]x-partitions-remaining | awk '{print !$1}')\n",
+                                "DONE=true\n",
+                                "# check every node's migration status\n",
+                                "for STAT in $MIGRATIONS; do\n",
+                                "   if [[ \"$STAT\" != '0' ]]; then\n",
+                                "       $DONE=false\n",
+                                "       break;\n",
+                                "    fi\n",
+                                "done\n",
+                                "# if migrations not done, pause ASG actions. Otherwise, continue autoscaling termination.\n",
+                                "if [[ $DONE == false ]]; then\n",
+                                "    aws autoscaling record-lifecycle-action-heartbeat --region $REGION --lifecycle-action-token $TOKEN --auto-scaling-group-name $ASG --lifecycle-hook-name $HOOK\n",
+                                "    else\n",
+                                "    aws autoscaling complete-lifecycle-action --region $REGION --lifecycle-action-token $TOKEN --lifecycle-hook-name $HOOK --auto-scaling-group-name $ASG --lifecycle-action-result CONTINUE\n",
+                                "fi\n"
+                                ] ] },
+                                "mode" : "000744",
+                                "owner" : "root",
+                                "group" : "root"
+                            }
+                        },
+                        "commands" : {
+                            "01_form_asd_cluster" : {
+                                "command" : "/tmp/aerospike_cluster",
+                                "cwd" : "/tmp"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "InstanceType" : { "Ref" : "InstanceType"},
+                "KeyName" : { "Ref" : "KeyPair" },
+                "BlockDeviceMappings" : { "Fn::If" : [ "NotUsingEBS",
+                    { "Ref" : "AWS::NoValue" },
+                    [ {
+                    "DeviceName" : "/dev/sdg",
+                    "Ebs" : { "VolumeSize" : {"Ref" : "EBS" },
+                             "VolumeType" : "gp2" }
+                    } ]
+                ] },
+                "IamInstanceProfile" : { "Ref" : "ClusterInstanceProfile" },
+                "ImageId" : { "Fn::FindInMap" : [ "RegionMap",  {"Ref" : "AWS::Region"} ,  "name"] },
+                "AssociatePublicIpAddress" : "true",
+                "SecurityGroups" : [ { "Fn::GetAtt" : [ "InstanceSecurityGroup", "GroupId" ] } ],
+                "UserData" : { "Fn::Base64" : { "Fn::Join" : ["", [
+                    "#!/bin/bash -xe\n",
+                    "yum update -y aws-cfn-bootstrap\n",
+                    "yum install -y jq\n",
+                    "/opt/aws/bin/cfn-init -v ",
+                    "         --stack ", { "Ref" : "AWS::StackName" },
+                    "         --resource LaunchConfig ",
+                    "         --region ", { "Ref" : "AWS::Region" }, "\n",
+  
+                    "/opt/aws/bin/cfn-signal -e $? ",
+                    "         --stack ", { "Ref" : "AWS::StackName" },
+                    "         --resource ClusterGroup ",
+                    "         --region ", { "Ref" : "AWS::Region" }, "\n"
+                    ] ] }
+                }
+            }
+        },
+        "VPC" : {
+            "Type" : "AWS::EC2::VPC",
+            "Properties" : {
+                "CidrBlock" : "10.0.0.0/16",
+                "EnableDnsSupport" : "true",
+                "EnableDnsHostnames" : "true",
+        "InstanceTenancy": { "Ref" : "Tenancy" },
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
+        "PublicSubnet" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "CidrBlock" : "10.0.0.0/24",
+                "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : { "Ref" : "AWS::Region" } } ] },
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
+        "InternetGateway" : {
+            "Type" : "AWS::EC2::InternetGateway",
+            "Properties" : {
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
+        "GatewayToInternet" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "InternetGatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
+        "PublicRouteTable" : {
+            "Type" : "AWS::EC2::RouteTable",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
+        "PublicRoute" : {
+            "Type" : "AWS::EC2::Route",
+            "DependsOn" : "GatewayToInternet",
+            "Properties" : {
+                "RouteTableId" : { "Ref" : "PublicRouteTable" },
+                "DestinationCidrBlock" : "0.0.0.0/0",
+                "GatewayId" : { "Ref" : "InternetGateway" }
+            }
+        },
+        "PublicSubnetRouteTableAssociation" : {
+            "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties" : {
+                "SubnetId" : { "Ref" : "PublicSubnet" },
+                "RouteTableId" : { "Ref" : "PublicRouteTable" }
+            }
+        },
+        "InstanceSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Enable ports needed by Aerospike",
+                "VpcId" : { "Ref" : "VPC" },
+                "SecurityGroupIngress" : [ {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "3000",
+                    "ToPort" : "3000",
+                    "CidrIp" : "0.0.0.0/0"
+                },
+                {
+                  "IpProtocol" : "tcp",
+                  "FromPort" : "22",
+                  "ToPort" : "22",
+                  "CidrIp" : { "Ref" : "PermitSSH" }
+                },
+                {
+                    "IpProtocol" : "tcp",
+                    "FromPort" : "8081",
+                    "ToPort" : "8081",
+                    "CidrIp" : "0.0.0.0/0"
+                },
+                {
+                    "IpProtocol" : "icmp",
+                    "FromPort" : "-1",
+                    "ToPort" : "-1",
+                    "CidrIp" : "0.0.0.0/0"
+                } ],
+                "Tags" : [ {"Key" : "StackID", "Value" : { "Ref" : "AWS::StackId"} } ]
+            }
+        },
+        "InstanceSecurityGroupIngress" : {
+            "Type" : "AWS::EC2::SecurityGroupIngress",
+            "Properties" : {
+                "GroupId" : { "Fn::GetAtt" : [ "InstanceSecurityGroup", "GroupId"] },
+                "IpProtocol" : "tcp",
+                "FromPort" : "3001",
+                "ToPort" : "3004",
+                "SourceSecurityGroupId" : { "Fn::GetAtt" : ["InstanceSecurityGroup", "GroupId"] }
+            },
+            "DependsOn" : "InstanceSecurityGroup"
+        }
+    },
+    "Outputs" : {
+        "AutoscalingID" : {
+            "Description" : "The Autoscaling Group ID that is used to deploy your cluster",
+            "Value" :  { "Ref" : "ClusterGroup" }
+        }
+    }
+}

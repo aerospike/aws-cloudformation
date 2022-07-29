@@ -1,3 +1,6 @@
+Note : This repo is no longer maintained, please refer to [aws-quickstart/quickstart-aerospike](https://github.com/aws-quickstart/quickstart-aerospike).
+
+
 aws-cloudformation
 ==================
 
